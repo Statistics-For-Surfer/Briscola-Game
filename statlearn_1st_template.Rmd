@@ -1,0 +1,139 @@
+---
+title: "Statistical Learning Project"
+author: "1st Milestone"
+date: "Group ID and List of Group Members"
+output: pdf_document
+urlcolor: magenta
+linkcolor: cyan
+geometry: margin=1.25cm
+fontsize: 12pt
+header-includes:
+- \usepackage{bbold}
+- \usepackage{mdframed, xcolor}
+- \usepackage{graphicx}
+- \mdfsetup{frametitlealignment=\center}
+- \usepackage{multirow}
+- \definecolor{shadecolor}{rgb}{0.89,0.8,1}
+- \newcommand{\Prob}{\mathbb{P}}
+- \newcommand{\Exp}{\mathbb{E}}
+- \newcommand{\Var}{\mathbb{V}\mathrm{ar}}
+- \newcommand{\Cov}{\mathbb{C}\mathrm{ov}}
+- \newcommand{\blue}{\textcolor{blue}}
+- \newcommand{\darkgreen}{\textcolor[rgb]{0,.5,0}}
+- \newcommand{\gray}{\textcolor[rgb]{.3,.3,.3}}
+- \newcommand{\blueA}{\textcolor[rgb]{0,.1,.4}}
+- \newcommand{\blueB}{\textcolor[rgb]{0,.3,.6}}
+- \newcommand{\blueC}{\textcolor[rgb]{0,.5,.8}}
+- \newcommand{\evidenzia}{\textcolor[rgb]{0,0,0}}
+- \newcommand{\nero}{\textcolor[rgb]{0,0,0}}
+- \newcommand{\darkyel}{\textcolor[rgb]{.4,.4,0}}
+- \newcommand{\darkred}{\textcolor[rgb]{.6,0,0}}
+- \newcommand{\blueDek}{\textcolor[rgb]{0.6000000, 0.7490196, 0.9019608}}
+- \newcommand{\purpLarry}{\textcolor[rgb]{0.6901961, 0.2431373, 0.4784314}}
+- \newcommand{\lightgray}{\textcolor[rgb]{.8,.8,.8}}
+- \newcommand{\bfun}{\left\{\begin{array}{ll}}
+- \newcommand{\efun}{\end{array}\right.}
+---
+
+
+Research Title
+----------
+Reinforcement learning to play Briscola. (Terporary title)
+
+----------
+
+
+Abstract
+----------
+Apply reinforcement algorithm in order to teach a machine how to play Briscola.
+
+----------
+
+
+Main research aim \& framework
+----------
+The main goal of our project is to figure out the best strategies of the italian popular game "Briscola". We have been playing this game since we were kids, we think it  is interesting to teach a machine how to play properly and then challenge it. We will see if our 12 years of training will be enough to beat the machine that has trained for definitely less time. The secondary goal is to create a "Briscola Engine" with different levels of skills to use as an app in order to give the users the possibility to improve in this card game.
+
+
+
+
+
+
+
+
+- $\href{https://web.stanford.edu/class/aa228/reports/2020/final117.pdf}{Beating \ Blackjack - A \ Reinforcement \ Learning  \ Approach}$
+
+- $\href{https://github.com/alisatodorova/Briscola-Project/blob/main/FinalReport.pdf}{Applications \ of \ Adversarial \ Search \ and \ Machine \ Learning \ in \ Briscola}$
+
+
+----------
+
+IML paper(s) you like (at this point!)
+----------
+
+$\href{https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf}{Reinforcement \ Learning: \ An \ Introduction}$
+
+-------
+
+Data source(s) 
+----------
+We do not have to collect data for out project :D.
+
+----------
+
+Data collection
+----------
+
+Our data will came from Briscola game's simulation.
+
+----------
+
+Model \& Methods [TODO] MA NOW
+----------
+We will try different approches $\dots$
+*To the best of your current knowledge, what type of statistical/data analysis tools do you feel will be relevant?*
+*Explain briefly why.*
+
+*If there's some cutting edge methods you may like to implement, cite it here adding the relevant paper(s)/book(s) in the last Section of this document.*
+
+*In particular, how the IML analysis described in the papers you selected fits into your project*
+
+----------
+
+
+Software/Hardware Toolkit
+----------
+Programming lanaguge(s): R , Python.
+
+Packeges : Keras , Pytorch [TODO], to check.
+
+We will try with our (Mavi) computers but can be possible that they will be not enough to handle the process.
+
+*Tell me something about the software, programming language(s), package(s), module(s), framework(s) you're planning to use to handle/model/analyse your data and why.*
+*Are you also planning to use or develop dedicated hardware for this task?*
+*If you feel your home-computer/laptop may not be enough to handle everything, explain to me why and what kind of resources you may instead need.*
+
+----------
+
+Project Timeline
+----------
+*Assuming I like and approve your proposal, detail how you are planning to organize your work in terms of sub-tasks completion.
+If you know what a [Gantt diagram](https://en.wikipedia.org/wiki/Gantt_chart) is, [use it](https://plot.ly/r/gantt/)!*
+
+We currently don't how to split the tasks, how to plan them.
+
+----------
+
+
+References
+----------
+*List here all the reference cited above. If you know what it is, it will be very much appreciated if you use and then upload on Moodle a [.bib file](https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html#bibliographies).*
+*As an example:*
+
+
+- J. Geiser, T. Hasseler(2020) *Beating Blackjack - A Reinforcement Learning Approach*.
+
+- H. Konduru, O. Von Moeller, P. Mohri, J. Monedero Simon, A. Safi, A. Todorova. *Applications of Adversarial Search and Machine Learning in Briscola*.
+
+
+----------
