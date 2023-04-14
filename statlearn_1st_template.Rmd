@@ -38,7 +38,7 @@ header-includes:
 
 Research Title
 ----------
-Reinforcement learning to play Briscola. (Terporary title)
+Reinforcement learning to play Briscola. (Terporary title!)
 
 ----------
 
