@@ -40,7 +40,7 @@ editor_options:
 
 ## Research Title
 
-Pausetta Briscola?
+"Pausetta Briscola?"
 
 ------------------------------------------------------------------------
 
