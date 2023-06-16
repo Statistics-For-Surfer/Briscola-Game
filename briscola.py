@@ -6,16 +6,16 @@ import random
 
 
 class Briscola_game():
-    def __init__(self, params):
+    def __init__(self):
         # deck, tuple of seed, card , and value
-        self.deck = create_deck()
+        self.deck = self.create_deck()
         random.shuffle(self.deck)
         self.winner = 0
         self.player_1 = self.draw_cards()
         self.player_2 = self.draw_cards()
-        self.briscola = random.choice(self.deck)
-        self.last_card =self.deck.pop(self.briscola)
-        self.deck = self.deck.append(self.last_card)
+        self.last_card = self.deck.pop()
+        self.briscola =  self.last_card[0]
+        self.deck = [self.last_card]+ self.deck
         self.scores = {0:0 , 1:0}
         self.played_cards = []
         self.card_on_table = None
@@ -97,7 +97,7 @@ class Briscola_game():
         player.append(self.deck.pop())
         return
     
-    def create_deck():
+    def create_deck(self):
         deck = []
         seeds = ['Bastoni', 'Denara' , 'Coppe' , 'Spade']
         cards = [1,2,3,4,5,6,7,8,9,10]
@@ -123,17 +123,17 @@ class Briscola_game():
 
     def hand(self, winner):
         if winner == 0:
-            self.state = hand_to_state(self,self.player_1,1)
-            card_1 = get_action(self, self.player_1, self.state)
+            self.state = self.hand_to_state(self,self.player_1,1)
+            card_1 = self.get_action(self, self.player_1, self.state)
             self.card_on_table = card_1
-            self.state = hand_to_state(self , self.player_2,2)
-            card_2 = get_action(self , self.player_2, self.state)
+            self.state = self.hand_to_state(self , self.player_2,2)
+            card_2 = self.get_action(self , self.player_2, self.state)
         else:
-            self.state = hand_to_state(self , self.player_2,1)
-            card_1 = get_action(self, self.player_2, self.state)
+            self.state = self.hand_to_state(self , self.player_2,1)
+            card_1 = self.get_action(self, self.player_2, self.state)
             self.card_on_table = card_1
-            self.state = hand_to_state(self , self.player_1,2)
-            card_2 = get_action(self, self.player_1, self.state)
+            self.state = self.hand_to_state(self , self.player_1,2)
+            card_2 = self.get_action(self, self.player_1, self.state)
             
         self.played_cards.append(card_1 ,card_2)
 
@@ -168,14 +168,14 @@ class Briscola_game():
         # Iterate through game
         done = False
         while(not done):
-            winner = hand(self.winner)
+            winner = self.hand(self.winner)
             if len(self.deck != 0):
                 if winner == 0:
-                    draw_action(self.player_1)
-                    draw_action(self.player_2)
+                    self.draw_action(self.player_1)
+                    self.draw_action(self.player_2)
                 else:
-                    draw_action(self.player_2)
-                    draw_action(self.player_1)
+                    self.draw_action(self.player_2)
+                    self.draw_action(self.player_1)
             if len(self.player_1 == 0):
                 done = True
         if self.score_1 > self.score_2:
