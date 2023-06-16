@@ -8,7 +8,7 @@ import random
 class Briscola_game():
     def __init__(self, params):
         # deck, tuple of seed, card , and value
-        self.deck = [('Bastoni', 1, 11) , ('Bastoni', 2, 0),  ('Bastoni', 3, 10)] #TODO 
+        self.deck = create_deck()
         random.shuffle(self.deck)
         self.winner = 0
         self.player_1 = self.draw_cards()
@@ -97,6 +97,16 @@ class Briscola_game():
         player.append(self.deck.pop())
         return
     
+    def create_deck():
+        deck = []
+        seeds = ['Bastoni', 'Denara' , 'Coppe' , 'Spade']
+        cards = [1,2,3,4,5,6,7,8,9,10]
+        values = [11,0,10,0,0,0,0,2,3,4]
+        for seed in seeds:
+            for j , card in enumerate(cards):
+                deck.append((seed, card, values[j]))
+        return deck
+    
 
 
 
@@ -172,6 +182,7 @@ class Briscola_game():
             final_winner = 0
         else: 
             final_winner = 1
+        return final_winner
         
         
 
