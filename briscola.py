@@ -8,17 +8,30 @@ import random
 class Briscola_game():
     def __init__(self):
         # deck, tuple of seed, card , and value
+
+        # Get the new deck 
         self.deck = self.create_deck()
+        # Shuffle the cards
         random.shuffle(self.deck)
+
+        # Select the "winner" ie in the first hand is going to be the player that starts to play 
         self.winner = np.random.randint(2)
+        
+        # Let both players collect their first cards
         self.player_1 = self.draw_cards()
         self.player_2 = self.draw_cards()
+
+        # Select the seed for the briscola and put the drawn cards as the last in the deck
         self.last_card = self.deck.pop()
         self.briscola =  self.last_card[0]
-        self.deck = [self.last_card]+ self.deck
+        self.deck = [self.last_card] + self.deck
+
+        # Initialize the other fields
         self.scores = {0:0 , 1:0}
         self.played_cards = []
         self.card_on_table = None
+
+        # Select the policy to be used
         self.action_type = 'random_policy'
 
 
@@ -45,15 +58,28 @@ class Briscola_game():
 
 
     def reset(self):
-                # deck, tuple of seed, card , and value
+        '''
+        Ripristina il mazzo dopo una partita
+        '''
+        # Reinitialize the class attributes like it was done in the constructor
+
+        # The deck
         self.deck = self.create_deck()
         random.shuffle(self.deck)
+
+        # First to play in the new game
         self.winner = np.random.randint(2)
+
+        # Cards
         self.player_1 = self.draw_cards()
         self.player_2 = self.draw_cards()
+
+        # Briscola
         self.last_card = self.deck.pop()
         self.briscola =  self.last_card[0]
         self.deck = [self.last_card] + self.deck
+
+        # Other fields
         self.scores = {0:0 , 1:0}
         self.played_cards = []
         self.card_on_table = None
@@ -113,9 +139,13 @@ class Briscola_game():
     
 
     def get_action(self,player,state):
+        '''
+        Scelta della carta da giocare in base alla policy
+        '''
         if self.action_type == 'input':
             action = int(input('Hit (1) or Pass (0): '))
         elif self.action_type == 'random_policy':
+            # Select and play a random card
             action = np.random.randint(len(player))
             played_card = player.pop(action)
         elif self.action_type == 'fixed_policy':
@@ -124,15 +154,23 @@ class Briscola_game():
     
 
     def draw_action(self, player):
+        '''
+        Per pescare una carta
+        '''
         if len(self.deck) != 0:
             player.append(self.deck.pop())
         return
     
     def create_deck(self):
+        '''
+        Creare mazzo iniziale
+        '''
         deck = []
         seeds = ['Bastoni', 'Denara' , 'Coppe' , 'Spade']
         cards = [1,2,3,4,5,6,7,8,9,10]
         values = [11,0,10,0,0,0,0,2,3,4]
+
+        # Create the list of tuples that represent each card of the deck
         for seed in seeds:
             for j , card in enumerate(cards):
                 deck.append((seed, card, values[j]))
@@ -141,59 +179,91 @@ class Briscola_game():
 
 
 
-    def hand_to_state(self , player, mapping):
-            '''boh ci si pensa'''
+    def hand_to_state(self , player, mapping = False):
+            '''
+            Creare dizionario che rappresenta lo stato.
+            
+            Prende in input il giocatore che sta per giocare e un booleano che indica se il giocatore gioca per secondo.
+            '''
             state_dic = {}
+            # Cards in the player hand
             state_dic['cards'] = player
+            # The current score
             state_dic['score_1'] = self.scores[0]
             state_dic['score_2'] = self.scores[1]
+            # All the cards that were already played
             state_dic['played_card'] = self.played_cards
-            state_dic['card_on_the_table'] =  self.card_on_table if mapping == 2 else None
+            # If the other player already played their card than we have a card on the table
+            state_dic['card_on_the_table'] =  self.card_on_table if mapping else None
+            # The seed of the briscola
             state_dic['last_card'] = self.briscola
             return state_dic
 
-    def hand(self, winner):
-        if winner == 0:
-            self.state = self.hand_to_state(self.player_1,1)
-            card_1 = self.get_action(self.player_1, self.state)
-            self.card_on_table = card_1
-            self.state = self.hand_to_state(self.player_2,2)
-            card_2 = self.get_action(self.player_2, self.state)
+    def hand(self, winner: int):
+        '''
+        Simulazione di una mano di briscola dato in input il giocatore che deve giocare per primo. 
 
-        else:
-            self.state = self.hand_to_state(self.player_2,1)
-            card_1 = self.get_action(self.player_2, self.state)
+        Aggiorna il punteggio del giocatore che vince e restituisce come output 0 o 1 in base al giocatore the ha vinto la mano. 
+        '''
+        # Player 1 has to play first
+        if winner == 0:
+            # Update the state
+            self.state = self.hand_to_state(self.player_1)
+            # Card played by player 1
+            card_1 = self.get_action(self.player_1, self.state)
+            # Change and update the state
             self.card_on_table = card_1
-            self.state = self.hand_to_state(self.player_1,2)
+            self.state = self.hand_to_state(self.player_2, True)
+            # Card played by player 2
+            card_2 = self.get_action(self.player_2, self.state)
+        # Player 2 is the one that has to play
+        else:
+            # Update the state
+            self.state = self.hand_to_state(self.player_2)
+            # Card played by player 2
+            card_1 = self.get_action(self.player_2, self.state)
+            # Change and update the state
+            self.card_on_table = card_1
+            self.state = self.hand_to_state(self.player_1, True)
+            # Card played by player 1
             card_2 = self.get_action(self.player_1, self.state)
 
+        # Add the played cards to the list of the cards already played
         self.played_cards.extend((card_1 ,card_2))
 
+        # Select the winner of the hand
         '''caso briscole'''
-        if card_1[0] == self.briscola[0] and card_2[0] != self.briscola[0]:
+        if card_1[0] == self.briscola and card_2[0] != self.briscola:
             self.scores[winner]+= card_1[2] + card_2[2]
             self.winner = winner
-        elif card_1[0] != self.briscola[0] and card_2[0] == self.briscola[0]:
+        elif card_1[0] != self.briscola and card_2[0] == self.briscola:
             self.scores[1-winner] += card_1[2] + card_2[2]
             self.winner = 1-winner
+        
         else:
-            '''
-            caso non briscole
-            '''        
-            
+            '''caso non briscole''' 
             if card_1[2] >= card_2[2]:
                 self.scores[winner] += card_1[2] + card_2[2]
-                self.winner = card_1[1] < card_2[1]
+                self.winner = 1-winner if card_1[1] < card_2[1] and card_1[0] == card_2[0] else winner
             elif card_1[2] < card_2[2] and card_1[0] == card_2[0]:
                 self.scores[1-winner] += card_1[2] + card_2[2]
                 self.winner = 1-winner
             else:
                 self.scores[winner] += card_1[2] + card_2[2]
                 self.winner = winner            
-        return winner
+        return self.winner
 
 
     def play_game(self):
+        '''
+        Simulazione di una partita di briscola.
+        Dopo aver simulato un'intera partita restituisce 0, 1 o -1.
+        - 0 per la vittoria del player 1.
+        - 1 per la vittoria del player 2.
+        - -1 nel caso di pareggio.
+
+        Alla fine il mazzo viene resettato.
+        '''
         # Only for ’input’ mode
         #if self.verbose:
         #    print('New Game!\n')
@@ -201,7 +271,9 @@ class Briscola_game():
         final_winner = None
         done = False
         while(not done):
+            # Simulate a hand
             winner = self.hand(self.winner)
+            # Draw if there are still cards in the deck 
             if len(self.deck) != 0:
                 if winner == 0:
                     self.draw_action(self.player_1)
@@ -209,18 +281,22 @@ class Briscola_game():
                 else:
                     self.draw_action(self.player_2)
                     self.draw_action(self.player_1)
+            # If the cards are finished stop the game
             if len(self.player_1) == 0:
                 done = True
+        # Check who won
         if self.scores[0] > self.scores[1]:
             final_winner = 0
         elif self.scores[0] < self.scores[1]: 
             final_winner = 1
-        # rimescola dai
-        #print(self.scores)
+        else:
+            final_winner = -1
+
+        # Reset the deck
         self.reset()
-        if final_winner != None:
-            return final_winner
-        return
+        
+        # return the winner
+        return final_winner
         
         
 
