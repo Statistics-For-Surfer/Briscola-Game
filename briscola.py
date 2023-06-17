@@ -6,6 +6,11 @@ import random
 
 
 class Briscola_game():
+    '''
+    Classe per eseguire simulazioni di gioco per il gioco di carte "Briscola".
+    '''
+
+
     def __init__(self):
         # deck, tuple of seed, card , and value
 
