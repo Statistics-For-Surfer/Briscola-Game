@@ -10,7 +10,7 @@ class Briscola_game():
         # deck, tuple of seed, card , and value
         self.deck = self.create_deck()
         random.shuffle(self.deck)
-        self.winner = 0
+        self.winner = np.random.randint(2)
         self.player_1 = self.draw_cards()
         self.player_2 = self.draw_cards()
         self.last_card = self.deck.pop()
@@ -45,11 +45,40 @@ class Briscola_game():
 
 
     def reset(self):
-        self.player = self.draw_hand()
-        #self.dealer = [self.draw_card()]
-        self.sarsp = []
-        self.deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]*4
+                # deck, tuple of seed, card , and value
+        self.deck = self.create_deck()
         random.shuffle(self.deck)
+        self.winner = np.random.randint(2)
+        self.player_1 = self.draw_cards()
+        self.player_2 = self.draw_cards()
+        self.last_card = self.deck.pop()
+        self.briscola =  self.last_card[0]
+        self.deck = [self.last_card]+ self.deck
+        self.scores = {0:0 , 1:0}
+        self.played_cards = []
+        self.card_on_table = None
+        self.action_type = 'random_policy'
+
+
+
+        # State, Action, Reward, Next State arrays
+        #self.sarsp = []
+        #self.sarsp_arr = np.array([], dtype=’int’).reshape(0,4)
+        #self.action_type = params.action_type # ’input’, ’random_policy’, ’fixed_policy’
+        #self.verbose = (params.action_type == ’input’)
+        #self.num_games = params.num_games
+        #self.fixed_policy_filepath = params.fixed_policy_filepath
+        #self.policy = self.load_policy()
+        #self.state_mapping = params.state_mapping
+
+
+        # Probably do not need to change these
+        #self.lose_state = 0
+        #self.win_state = 1
+        #self.terminal_state = 2
+        # Also do not need to change these
+        self.lose_reward = -10
+        self.win_reward = 10
         return
 
 
@@ -87,7 +116,7 @@ class Briscola_game():
         if self.action_type == 'input':
             action = int(input('Hit (1) or Pass (0): '))
         elif self.action_type == 'random_policy':
-            action = np.random.randint(len(player)- 1)
+            action = np.random.randint(len(player))
             played_card = player.pop(action)
         elif self.action_type == 'fixed_policy':
             action = self.p
@@ -95,7 +124,8 @@ class Briscola_game():
     
 
     def draw_action(self, player):
-        player.append(self.deck.pop())
+        if len(self.deck) != 0:
+            player.append(self.deck.pop())
         return
     
     def create_deck(self):
@@ -129,13 +159,14 @@ class Briscola_game():
             self.card_on_table = card_1
             self.state = self.hand_to_state(self.player_2,2)
             card_2 = self.get_action(self.player_2, self.state)
+
         else:
             self.state = self.hand_to_state(self.player_2,1)
             card_1 = self.get_action(self.player_2, self.state)
             self.card_on_table = card_1
             self.state = self.hand_to_state(self.player_1,2)
             card_2 = self.get_action(self.player_1, self.state)
-            
+
         self.played_cards.extend((card_1 ,card_2))
 
         '''caso briscole'''
@@ -179,10 +210,14 @@ class Briscola_game():
                     self.draw_action(self.player_1)
             if len(self.player_1) == 0:
                 done = True
-        if self.score_1 > self.score_2:
+        if self.scores[0] > self.scores[1]:
             final_winner = 0
         else: 
             final_winner = 1
+        # rimescola dai
+        #print(self.scores)
+        self.reset()
+        
         return final_winner
         
         
