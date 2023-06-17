@@ -53,7 +53,7 @@ class Briscola_game():
         self.player_2 = self.draw_cards()
         self.last_card = self.deck.pop()
         self.briscola =  self.last_card[0]
-        self.deck = [self.last_card]+ self.deck
+        self.deck = [self.last_card] + self.deck
         self.scores = {0:0 , 1:0}
         self.played_cards = []
         self.card_on_table = None
@@ -174,8 +174,8 @@ class Briscola_game():
             self.scores[winner]+= card_1[2] + card_2[2]
             self.winner = winner
         elif card_1[0] != self.briscola[0] and card_2[0] == self.briscola[0]:
-            self.scores[abs(1-winner)] += card_1[2] + card_2[2]
-            self.winner = abs(1-winner)
+            self.scores[1-winner] += card_1[2] + card_2[2]
+            self.winner = 1-winner
         else:
             '''
             caso non briscole
@@ -185,8 +185,8 @@ class Briscola_game():
                 self.scores[winner] += card_1[2] + card_2[2]
                 self.winner = card_1[1] < card_2[1]
             elif card_1[2] < card_2[2] and card_1[0] == card_2[0]:
-                self.scores[abs(1-winner)] += card_1[2] + card_2[2]
-                self.winner = abs(1-winner)
+                self.scores[1-winner] += card_1[2] + card_2[2]
+                self.winner = 1-winner
             else:
                 self.scores[winner] += card_1[2] + card_2[2]
                 self.winner = winner            
@@ -198,6 +198,7 @@ class Briscola_game():
         #if self.verbose:
         #    print('New Game!\n')
         # Iterate through game
+        final_winner = None
         done = False
         while(not done):
             winner = self.hand(self.winner)
@@ -212,13 +213,14 @@ class Briscola_game():
                 done = True
         if self.scores[0] > self.scores[1]:
             final_winner = 0
-        else: 
+        elif self.scores[0] < self.scores[1]: 
             final_winner = 1
         # rimescola dai
         #print(self.scores)
         self.reset()
-        
-        return final_winner
+        if final_winner != None:
+            return final_winner
+        return
         
         
 
