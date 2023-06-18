@@ -37,8 +37,8 @@ class Briscola_game():
         self.card_on_table = None
 
         # Select the policy to be used
-        self.action_type = 'random_policy'
-
+        #self.action_type = 'random_policy'
+        self.action_type = 'greedy_policy'
 
 
         # State, Action, Reward, Next State arrays
@@ -141,7 +141,58 @@ class Briscola_game():
         print(f'Player_2 hand: {self.dealer}\t\t sum: {self.sum_hand(self.dealer)}')
         return
 
-    
+
+
+    def greedy_action(self, player ,state):
+        player_seed  = [x[0] for x in player]
+        player_card  = [x[1] for x in player]
+        player_value = [x[2] for x in player]
+        possible_action = []
+
+
+        if self.card_on_table == None:
+            return self.max_min_values(player, maxx = False)
+        else:
+            # The card on the table is a briscola
+            if self.card_on_table[0] == self.briscola:
+                # check if you have a briscola greater than the one on the table
+                for i in range(len(player)):
+                    if player_seed[i] == self.card_on_table[0] and player_value[i] > self.card_on_table[2]:
+                        possible_action.append(player[i])
+            else:
+                for i in range(len(player)):
+                    if (player_seed[i] == self.card_on_table[0] and  player_value > self.card_on_table[2]) or player_seed == self.briscola:
+                        possible_action.append(player)
+        # I cannot take
+        if len(possible_action) == 0:
+            # I want to put the card with less points
+            return self.max_min_values(possible_action, maxx = False)
+
+        else:
+            # I want to put the card with more points
+            return self.max_min_values(possible_action, maxx = True)
+
+
+    def max_min_values(self,player, maxx = True):
+        if maxx == True:
+            max_tuple = None
+            max_value = float('-inf')
+
+            for tuple in player:
+                if tuple[2] > max_value:
+                    max_value = tuple[2]
+                    max_tuple = tuple
+
+            return max_tuple
+        else:
+            min_tuple = None
+            min_value = float('-inf')
+
+            for tuple in player:
+                if tuple[2] < min_value:
+                    min_value = tuple[2]
+                    min_tuple = tuple
+            return min_tuple
 
     def get_action(self,player,state):
         '''
@@ -153,8 +204,10 @@ class Briscola_game():
             # Select and play a random card
             action = np.random.randint(len(player))
             played_card = player.pop(action)
-        elif self.action_type == 'fixed_policy':
-            action = self.p
+        elif self.action_type == 'greedy_policy':
+            action = self.greedy_action(player,state)
+            print(action)
+            #played_card = player.pop(action)
         return played_card
     
 
@@ -180,8 +233,6 @@ class Briscola_game():
             for j , card in enumerate(cards):
                 deck.append((seed, card, values[j]))
         return deck
-    
-
 
 
     def hand_to_state(self , player, mapping = False):
