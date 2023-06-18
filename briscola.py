@@ -144,6 +144,10 @@ class Briscola_game():
 
 
     def greedy_action(self, player ,state):
+        '''
+        scelta delle carte da buttare in maniera greedy, se puoi prendere prendi altrimenti butti la carta 
+        con il valore più basso.
+        '''
         player_seed  = [x[0] for x in player]
         player_card  = [x[1] for x in player]
         player_value = [x[2] for x in player]
@@ -174,6 +178,9 @@ class Briscola_game():
 
 
     def max_min_values(self,player, maxx = True):
+        '''
+        carta con valore più alto o più basso
+        '''
         if maxx == True:
             max_tuple = None
             max_value = float('-inf')
