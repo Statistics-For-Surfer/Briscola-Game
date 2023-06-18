@@ -165,19 +165,20 @@ class Briscola_game():
                         possible_action.append(player[i])
             else:
                 for i in range(len(player)):
-                    if (player_seed[i] == self.card_on_table[0] and  player_value > self.card_on_table[2]) or player_seed == self.briscola:
-                        possible_action.append(player)
+                    if (player_seed[i] == self.card_on_table[0] and  player_value[i] > self.card_on_table[2]) or player_seed[i] == self.briscola:
+                        possible_action.append(player[i])
+
         # I cannot take
         if len(possible_action) == 0:
             # I want to put the card with less points
-            return self.max_min_values(possible_action, maxx = False)
+            return self.max_min_values(player, maxx = False)
 
         else:
             # I want to put the card with more points
             return self.max_min_values(possible_action, maxx = True)
 
 
-    def max_min_values(self,player, maxx = True):
+    def max_min_values(self, player, maxx = True):
         '''
         carta con valore più alto o più basso
         '''
@@ -193,10 +194,13 @@ class Briscola_game():
             return max_tuple
         else:
             min_tuple = None
-            min_value = float('-inf')
+            min_value = float('inf')
 
             for tuple in player:
                 if tuple[2] < min_value:
+                    min_value = tuple[2]
+                    min_tuple = tuple
+                elif tuple[2] == min_value and tuple[0]!=self.briscola:
                     min_value = tuple[2]
                     min_tuple = tuple
             return min_tuple
@@ -213,8 +217,7 @@ class Briscola_game():
             played_card = player.pop(action)
         elif self.action_type == 'greedy_policy':
             action = self.greedy_action(player,state)
-            print(action)
-            #played_card = player.pop(action)
+            played_card = player.pop(player.index(action))
         return played_card
     
 
@@ -293,6 +296,8 @@ class Briscola_game():
 
         # Add the played cards to the list of the cards already played
         self.played_cards.extend((card_1 ,card_2))
+        # Restet the card on table for the next iteration
+        self.card_on_table = None
 
         # Select the winner of the hand
         '''caso briscole'''
@@ -313,7 +318,7 @@ class Briscola_game():
                 self.winner = 1-winner
             else:
                 self.scores[winner] += card_1[2] + card_2[2]
-                self.winner = winner            
+                self.winner = winner        
         return self.winner
 
 
