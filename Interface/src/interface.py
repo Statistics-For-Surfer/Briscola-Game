@@ -63,7 +63,7 @@ class Briscola(object):
     def clean_values(self):
         '''Clean saved values from previous game'''
 
-        self.len_virtual_deck = 1 # Start with 33
+        self.len_virtual_deck = 33 # Start with 33
         self.player_turn = bool(random.randint(0, 1))
         self.last_two_hand = False
         self.bot_points, self.player_points, self.points = 0, 0, 0
