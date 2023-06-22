@@ -38,7 +38,8 @@ class Briscola_game():
 
         # Select the policy to be used
         #self.action_type = 'random_policy'
-        self.action_type = 'greedy_policy'
+        self.action_type_1 = 'random_policy'
+        self.action_type_2 = 'greedy_policy'
 
 
         # State, Action, Reward, Next State arrays
@@ -205,19 +206,20 @@ class Briscola_game():
                     min_tuple = tuple
             return min_tuple
 
-    def get_action(self,player,state):
+    def get_action(self,player,state, action_type):
         '''
         Scelta della carta da giocare in base alla policy
         '''
-        if self.action_type == 'input':
-            action = int(input('Hit (1) or Pass (0): '))
-        elif self.action_type == 'random_policy':
+        if action_type == 'input':
+            action = int(input())
+        elif action_type == 'random_policy':
             # Select and play a random card
             action = np.random.randint(len(player))
             played_card = player.pop(action)
-        elif self.action_type == 'greedy_policy':
+        elif action_type == 'greedy_policy':
             action = self.greedy_action(player,state)
             played_card = player.pop(player.index(action))
+        
         return played_card
     
 
@@ -276,23 +278,23 @@ class Briscola_game():
             # Update the state
             self.state = self.hand_to_state(self.player_1)
             # Card played by player 1
-            card_1 = self.get_action(self.player_1, self.state)
+            card_1 = self.get_action(self.player_1, self.state , action_type = self.action_type_1)
             # Change and update the state
             self.card_on_table = card_1
             self.state = self.hand_to_state(self.player_2, True)
             # Card played by player 2
-            card_2 = self.get_action(self.player_2, self.state)
+            card_2 = self.get_action(self.player_2, self.state,  action_type = self.action_type_2)
         # Player 2 is the one that has to play
         else:
             # Update the state
             self.state = self.hand_to_state(self.player_2)
             # Card played by player 2
-            card_1 = self.get_action(self.player_2, self.state)
+            card_1 = self.get_action(self.player_2, self.state,  action_type = self.action_type_2)
             # Change and update the state
             self.card_on_table = card_1
             self.state = self.hand_to_state(self.player_1, True)
             # Card played by player 1
-            card_2 = self.get_action(self.player_1, self.state)
+            card_2 = self.get_action(self.player_1, self.state , action_type = self.action_type_1)
 
         # Add the played cards to the list of the cards already played
         self.played_cards.extend((card_1 ,card_2))
@@ -318,7 +320,7 @@ class Briscola_game():
                 self.winner = 1-winner
             else:
                 self.scores[winner] += card_1[2] + card_2[2]
-                self.winner = winner        
+                self.winner = winner 
         return self.winner
 
 
