@@ -267,7 +267,7 @@ class Game:
 
 
 
-    def find_hand_winner(self, card_1, card_2, player_1, player_2, first):
+    def find_hand_winner(self, card_1, card_2, first):
         '''
         Function that given the cards player and the order in which 
         they were played find the winner and gives the points accordingly
@@ -277,27 +277,102 @@ class Game:
         # Both players played a card with the same seed
         if card_1.seed == card_2.seed:
             if card_1.value >= card_2.value and card_1.numb > card_2.numb:
-                player_1.points += points
+                self.player_1.points += points
                 return 1
             else:
-                player_2.points += points
+                self.player_2.points += points
                 return 2
         
         # One player played a briscola and the other didn't
         if card_1.is_Briscola:
-            player_1.points += points
+            self.player_1.points += points
             return 1
         elif card_2.is_Briscola:
-            player_2.points += points
+            self.player_2.points += points
             return 2
         
         # If the seeds are different and there are no briscole then 
         # who played first wins.
         else:
             if first == 1:
-                player_1.points += points
+                self.player_1.points += points
                 return 1
             else:
-                player_2.points += points
+                self.player_2.points += points
                 return 2
+
+    # ------------------- Q LEARN FUNCTIONS -------------------
+
+    def step(self, card):
+        '''
+        Function that finds the new 
+        '''
+        winner = None
+        if self.first_to_play == 1:
+            self.update_state_after_play(card, 6, True)
+        else:
+            self.update_state_after_play(card, 7)
+            winner = self.find_hand_winner(card, self.card_on_table, 2)
+
+        done = self.finish_step(winner)
+
+        if done:
+            return (self.get_state_for_player(1), 
+                self.player_1.points - self.player_2.points, done)
+            
+        return (self.get_state_for_player(1), 0, done)
+
+    
+
+    def finish_step(self, winner):
+        '''
+        Function that finishes the step done before and set up for 
+        the new iteration.
+        '''
+        # The hand was not finished
+        if not winner:
+            # Let player 2 play it's card
+            state = self.get_state_for_player(2)
+            card = self.player_2.get_action(state, self.card_on_table)
+            self.update_state_after_play(card, 9)
+
+            # Fine the new winner
+            winner = self.find_hand_winner(self.card_on_table[0], card, 1)
+            self.first_to_play == winner
+
+        # Now we have the end of the hand so we update the state
+        self.update_state_after_hand()
+
+        # If the game is over return
+        if not len(self.player_1.cards):
+                return True
+
+        # If there are still cards in the deck set up for the new iteration
+        if len(self.deck.deck):
+            card_1 = self.deck.draw_card()
+            card_2 = self.deck.draw_card()
+
+            if(self.first_to_play == 1):
+                self.player_1.cards.append(card_1)
+                self.player_2.cards.append(card_2)
+                self.update_state_after_draw(card_1, card_2)
+            else:
+                self.player_1.cards.append(card_2)
+                self.player_2.cards.append(card_1)
+                self.update_state_after_draw(card_2, card_1)
+
+        # If the first to play in the new hand is player 2
+        if self.first_to_play == 2:
+            state = self.get_state_for_player(2)
+            card = self.player_2.get_action(state, self.card_on_table)
+            self.update_state_after_play(card, 8, True)
+
+        return False
+
+
+
+
+
+
+
 

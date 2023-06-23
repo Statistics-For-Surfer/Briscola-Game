@@ -13,6 +13,7 @@ BATCH_SIZE = 256
 GAMMA = 0.99
 LAMBDA = 0.0001 
 LR = 1e-2
+TAU = 0.005
 
 
 # TODO capire come fare il training e salvare il modello 
@@ -103,67 +104,6 @@ class Brain:
         self.optimizer.step()
 
 
-    def train(self, x, y, player, epoch=1, verbose=0):
-
-        # TODO finisci funzione !!!
-        if torch.cuda.is_available():
-            num_episodes = 600
-        else:
-            num_episodes = 50
-
-        for i_episode in range(num_episodes):
-            # Initialize the environment and get it's state
-            self.env.reset()
-            state = self.env.get_state_for_player(player)
-            state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-            for t in count():
-                action = select_action(state)
-                observation, reward, terminated, truncated, _ = env.step(action.item())
-                reward = torch.tensor([reward], device=device)
-                done = terminated or truncated
-
-                if terminated:
-                    next_state = None
-                else:
-                    next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
-
-                # Store the transition in memory
-                memory.push(state, action, next_state, reward)
-
-                # Move to the next state
-                state = next_state
-
-                # Perform one step of the optimization (on the policy network)
-                optimize_model()
-
-                # Soft update of the target network's weights
-                # θ′ ← τ θ + (1 −τ )θ′
-                target_net_state_dict = target_net.state_dict()
-                policy_net_state_dict = policy_net.state_dict()
-                for key in policy_net_state_dict:
-                    target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-                target_net.load_state_dict(target_net_state_dict)
-
-                if done:
-                    episode_durations.append(t + 1)
-                    plot_durations()
-                    break
-
-        print('Complete')
-        plot_durations(show_result=True)
-        plt.ioff()
-        plt.show()
-
-
-
-
-
-
-
-        self.model.fit(x, y, batch_size=BATCH_SIZE, epochs=epoch, 
-                    verbose=verbose)
-
-
     def evaluate(self, x, y):
         return self.model.evaluate(x, y, batch_size=BATCH_SIZE, verbose=0)
 
@@ -199,57 +139,61 @@ class Brain:
     
 
     
+    def train(self, x, y, epoch=1, verbose=0):
 
+        # TODO finisci funzione !!!
+        if torch.cuda.is_available():
+            num_episodes = 600
+        else:
+            num_episodes = 50
 
-    def updateTargetModel(self):
+        for i_episode in range(num_episodes):
+            # Initialize the environment and get it's state
+            self.env.reset()
+            self.env.first_to_play = 1
+            state = self.env.get_state_for_player(1)
+            state = torch.tensor(state, dtype=torch.float32, 
+                                device=device).unsqueeze(0)
+            for _ in range(20):
 
-        self.model_.set_weights(self.model.get_weights())
+                # Let the agent choose the action
+                action = self.env.player_1.get_action(state, 
+                                                    self.env.card_on_table)
+                
+                # Perform the action and see where it will lead to
+                observation, reward, done = self.env.step(action)
+                reward = torch.tensor([reward], device=device)
+                
+                if done:
+                    next_state = None
+                else:
+                    next_state = torch.tensor(observation, dtype=torch.float32, 
+                                            device=device).unsqueeze(0)
 
+                # Store the transition in memory
+                self.memory.push(state, action, next_state, reward)
 
-class Memory:   # stored as ( s, a, r, s_ )
+                # Move to the next state
+                state = next_state
 
-    def __init__(self, capacity):
+                # Perform one step of the optimization (on the policy network)
+                self.optimize_model()
 
-        self.tree = SumTree(capacity)
+                # Soft update of the target network's weights
+                # θ′ ← τ θ + (1 −τ )θ′
+                target_net_state_dict = self.model_.state_dict()
+                policy_net_state_dict = self.model.state_dict()
+                for key in policy_net_state_dict:
+                    target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+                self.model_.load_state_dict(target_net_state_dict)
 
-        self.e = 0.01
-        self.a = 0.6
+                if done:
+                    break
 
-
-    def get_priority(self, error):
-
-        return (error + self.e) ** self.a
-
-
-    def add(self, error, sample):
-
-        p = self.get_priority(error)
-        self.tree.add(p, sample)
-
-
-    def sample(self, n):
-
-        batch = []
-        segment = self.tree.total() / n
-
-        for i in range(n):
-
-            a = segment * i
-            b = segment * (i + 1)
-
-            s = random.uniform(a, b)
-
-            (idx, p, data) = self.tree.get(s)
-            batch.append((idx, data))
-
-        return batch
-
-
-    def update(self, idx, error):
-        p = self.get_priority(error)
-        self.tree.update(idx, p)
-
-
+        print('Complete')
+        plot_durations(show_result=True)
+        plt.ioff()
+        plt.show()
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
