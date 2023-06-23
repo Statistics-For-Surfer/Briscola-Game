@@ -38,7 +38,7 @@ class Briscola(object):
         pygame.display.set_caption('Pausetta Briscola?')
         pygame.init()
 
-        self.WIDTH = 1500
+        self.WIDTH = 1200
         self.HEIGHT = self.WIDTH / 3 * 2
         self.screen = pygame.display.set_mode([self.WIDTH, self.HEIGHT])
         self.card_w = self.WIDTH * .097
