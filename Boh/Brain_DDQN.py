@@ -11,6 +11,8 @@ BATCH_SIZE = 256
 
 GAMMA = 0.99
 LAMBDA = 0.0001 
+LR = 1e-2
+
 
 # TODO capire come fare il training e salvare il modello 
 # 
@@ -40,8 +42,14 @@ class Brain:
         self.actionCnt = actionCnt
 
         if train:
-            self.model = DQN(self.stateCnt, self.actionCnt)
-            self.model_ = DQN(self.stateCnt, self.actionCnt)
+            self.model = DQN(self.stateCnt, self.actionCnt).to(device)
+            self.model_ = DQN(self.stateCnt, self.actionCnt).to(device)
+
+            self.model_.load_state_dict(self.model.state_dict())
+            optimizer = optim.AdamW(self.model.parameters(), lr=LR, 
+                                    amsgrad=True)
+            memory = ReplayMemory(10000)
+
 
         # TODO come fare quando abbiamo già il modello?
 
@@ -84,6 +92,9 @@ class Brain:
         idx = np.argmax(next_Qs)
 
         return valid_actions[idx]
+    
+
+    
 
 
     def updateTargetModel(self):
