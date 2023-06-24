@@ -176,9 +176,7 @@ class Game:
         Function that simulate a game of briscola. 
         '''
 
-        done = False
-
-        while(not done):
+        while True:
             self.hand()
             self.update_state_after_hand()
 
@@ -189,7 +187,7 @@ class Game:
                 card_1 = self.deck.draw_card()
                 card_2 = self.deck.draw_card()
 
-                if(self.first_to_play == 1):
+                if self.first_to_play == 1:
                     self.player_1.cards.append(card_1)
                     self.player_2.cards.append(card_2)
                     self.update_state_after_draw(card_1, card_2)
@@ -233,12 +231,10 @@ class Game:
             card_2 = self.player_2.get_action(state_2, self.card_on_table)
             self.update_state_after_play(card_2, 8, True)
             state_1 = self.get_state_for_player(1)
-            card_1 = self.player_1.get_action(state_1,
-                                            self.card_on_table)
+            card_1 = self.player_1.get_action(state_1, self.card_on_table)
             self.update_state_after_play(card_1, 7)
 
-        self.first_to_play = self.find_hand_winner(card_1, card_2, 
-                                            self.player_1, self.player_2,
+        self.first_to_play = self.find_hand_winner(card_1, card_2,
                                             self.first_to_play)
 
 

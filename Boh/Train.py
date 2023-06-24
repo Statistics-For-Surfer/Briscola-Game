@@ -19,7 +19,7 @@ class Game_Train():
         self.player_1 = {'cards': self.deck.draw_first_hand(), 
                         'policy': 'Q_learning', 'points': 0}
         self.player_2 = {'cards': self.deck.draw_first_hand(), 
-                        'policy': 'Random', 'points': 0}
+                        'policy': 'Greedy', 'points': 0}
 
         self.state = self.initial_state(self.player_1['cards'], 
                                         self.player_2['cards'], 
@@ -190,6 +190,7 @@ class Game_Train():
         else:
             self.update_state_after_play(card, 7)
             winner = self.find_hand_winner(card, self.card_on_table, 2)
+            self.first_to_play = winner
 
         done = self.finish_step(winner)
 
@@ -210,7 +211,7 @@ class Game_Train():
         if not winner:
             # Let player 2 play it's card
             state = self.get_state_for_player(2)
-            card = self.get_action_train(state, self.player_2)
+            card = self.get_action_train(state, self.player_2, self.card_on_table)
             self.update_state_after_play(card, 9)
 
             # Fine the new winner
@@ -241,7 +242,7 @@ class Game_Train():
         # If the first to play in the new hand is player 2
         if self.first_to_play == 2:
             state = self.get_state_for_player(2)
-            card = self.get_action_train(state, self.player_2)
+            card = self.get_action_train(state, self.player_2, self.card_on_table)
             self.update_state_after_play(card, 8, True)
 
         return False
@@ -249,9 +250,11 @@ class Game_Train():
 
     # -------------------- GET ACTION FUNCTION --------------------
 
-    def get_action_train(self, state, player, brain = None):
+    def get_action_train(self, state, player, brain = None, card_on_table = None):
         if player['policy'] == 'Random':
             return self.random_action(player)
+        elif player['policy'] == 'Greedy':
+            return self.greedy_action(player, card_on_table)
         else: 
             return self.Q_action(state, player, brain)
             
@@ -267,14 +270,15 @@ class Game_Train():
         global steps_done
 
         # Find the new threshold that changes with the number of steps
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-                        math.exp(-1. * steps_done / EPS_DECAY)
+        #eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+                        #math.exp(-1. * steps_done / EPS_DECAY)
+        eps_threshold = 0
         steps_done += 1
 
 
         # Under the threshold we just use the random policy 
         if random.random() < eps_threshold:
-                return self.random_action(player)
+            return self.random_action(player)
         
         # Over the threshold we use the nn prediction
         else:
@@ -290,6 +294,80 @@ class Game_Train():
         card_to_play = player['cards'].pop(card_index)
 
         return card_to_play
+    
+        # -------------------- GREEDY PLAYER --------------------
+
+    def max_min_values(self, cards, maxx = True):
+        '''
+        Function that will return the card with either the maximum 
+        of the minimum value out of the player current playable cards.
+        '''
+        
+        # Want to retrieve the max
+        if maxx == True:
+            max_card = None
+            max_value = float('-inf')
+
+            for card in cards:
+                if card.value > max_value:
+                    max_value = card.value
+                    max_card = card
+
+            return max_card
+        
+        # Want to retrieve the min
+        else:
+            min_card = None
+            min_value = float('inf')
+
+            for card in cards:
+                if card.value < min_value:
+                    min_value = card.value
+                    min_card = card
+                elif card.value == min_value and not card.is_Briscola:
+                    min_value = card.value
+                    min_card = card
+            return min_card
+        
+
+    
+    def greedy_action(self, player, card_on_table = None):
+        '''
+        Choose the card to play with a greedy method, the agent will 
+        take the hand if it can else just throw the one with the lowest 
+        value.
+        '''
+        possible_action = []
+
+
+        if card_on_table == None:
+            return self.max_min_values(player['cards'], maxx = False)
+        else:
+            # The card on the table is a briscola
+            if card_on_table.is_Briscola:
+                # check if you have a briscola greater than the 
+                # one on the table
+                for card in player['cards']:
+                    if (card.is_Briscola and 
+                        card.value > card_on_table.value):
+
+                        possible_action.append(card)
+            else:
+                for card in player['cards']:
+                    if ((card.seed == card_on_table.seed and 
+                        card.value > card_on_table.value) or 
+                        card.is_Briscola):
+
+                        possible_action.append(card)
+
+        # I cannot take
+        if len(possible_action) == 0:
+            # I want to put the card with less points
+            return self.max_min_values(player['cards'], maxx = False)
+
+        else:
+            # I want to put the card with more points
+            return self.max_min_values(possible_action, maxx = True)
     
 
     # -------------------- GAME FUNCTIONS USED TO TRAIN --------------------

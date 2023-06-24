@@ -6,15 +6,14 @@ from collections import namedtuple, deque
 import random
 import numpy as np
 import Train as Briscola
+from tqdm import tqdm
 
-LEARNING_RATE = 0.00025
-BATCH_SIZE = 256
-
+BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.0001 
-LR = 1e-2
+LR = 1e-1
 TAU = 0.005
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = "cpu"
 
 
 # TODO capire come fare il training e salvare il modello 
@@ -29,6 +28,8 @@ def find_all_valid_actions(states):
         '''
 
         valid = []
+
+        
         for i, state in enumerate(states[0]):
             # State 1 and 2 are the ones corresponding to card in the 
             # hand of the player. 1 not briscola, 2 briscola
@@ -53,6 +54,8 @@ class Brain:
                                     amsgrad=True)
             self.memory = ReplayMemory(10000)
             self.env = Briscola.Game_Train()
+        else:
+            self.model = torch.load('model.pt')
 
 
         # TODO come fare quando abbiamo già il modello?
@@ -105,10 +108,6 @@ class Brain:
         self.optimizer.step()
 
 
-    def evaluate(self, x, y):
-        return self.model.evaluate(x, y, batch_size=BATCH_SIZE, verbose=0)
-
-
     def predict(self, state, target=False):
         '''
         Function that performs the predictions given the current state.
@@ -131,6 +130,7 @@ class Brain:
         
         # Get the predictions of the nn
         next_Qs = self.predict(state, target).flatten()
+
         # Select the one that are actually valid
         next_Qs = next_Qs[valid_actions]
 
@@ -138,18 +138,18 @@ class Brain:
         idx = torch.argmax(next_Qs)
 
         return valid_actions[idx]
-    
+
 
     
     def train(self):
 
-        # TODO finisci funzione !!!
-        if torch.cuda.is_available():
-            num_episodes = 600
+        if device == 'cuda0' :
+            num_episodes = 10000
         else:
-            num_episodes = 50
+            num_episodes = 3000
 
-        for i_episode in range(num_episodes):
+        print(num_episodes)
+        for i_episode in tqdm(range(num_episodes)):
             # Initialize the environment and get it's state
             self.env.reset()
             self.env.first_to_play = 1
@@ -158,13 +158,16 @@ class Brain:
                                 device=device).unsqueeze(0)
             for _ in range(20):
                 # Let the agent choose the action
-                action = self.env.get_action_train(state, self.env.player_1, self)
-                tensor_actions = torch.zeros(40)
-                tensor_actions[action.id] = 1
+                action = self.env.get_action_train(state, self.env.player_1, 
+                                                self, self.env.card_on_table)
+                    #tensor_actions = torch.zeros(40, dtype=torch.int64)
+                    #tensor_actions[action.id] = 1
+                tensor_actions = torch.full((1,1), action.id, device = device,
+                                            dtype=torch.int64)
                 
                 # Perform the action and see where it will lead to
                 observation, reward, done = self.env.step(action)
-                reward = torch.tensor([reward], device=device)
+                reward = torch.tensor([reward], device=device, dtype=torch.int64)
                 
                 if done:
                     next_state = None
@@ -181,6 +184,8 @@ class Brain:
                 # Perform one step of the optimization (on the policy network)
                 self.optimize_model()
 
+                #print(self.model.state_dict())
+
                 # Soft update of the target network's weights
                 # θ′ ← τ θ + (1 −τ )θ′
                 target_net_state_dict = self.model_.state_dict()
@@ -191,6 +196,8 @@ class Brain:
 
                 if done:
                     break
+                    
+        torch.save(self.model, 'model.pt')
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -216,14 +223,14 @@ class DQN(nn.Module):
 
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 128)
-        self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, n_actions)
+        self.layer1 = nn.Linear(n_observations, 128, dtype=torch.float32)
+        self.layer2 = nn.Linear(128, 128, dtype=torch.float32)
+        self.layer3 = nn.Linear(128, n_actions, dtype=torch.float32)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        x = F.relu(self.layer1(x))
+        x = F.relu(self.layer1(x)) 
         x = F.relu(self.layer2(x))
         return self.layer3(x)
     

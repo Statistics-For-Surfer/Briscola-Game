@@ -2,6 +2,7 @@ import numpy as np
 from Brain_DDQN import Brain
 import random
 import math
+import torch
 
 steps_done = 0
 EPS_START = 0.9
@@ -12,14 +13,14 @@ EPS_DECAY = 1000
 
 class Player:
 
-    def __init__(self, hand, policy, train = False):
+    def __init__(self, hand, policy):
         self.cards = hand
         self.policy = policy
         self.points = 0
         self.state = None
 
         if policy == 'Q_learning':
-            self.brain = Brain(40, 40, train)
+            self.brain = Brain(40, 40)
 
 
     def get_action(self, state, card_on_table = None):
@@ -115,9 +116,8 @@ class Player:
         '''
         Choose the card to play randomly.
         '''
-
-        card_index = np.random.randint(len(self.cards))
-        card_to_play = self.cards.pop(card_index)
+        card_index = np.random.randint(len(self.cards) + 1)
+        card_to_play = self.cards.pop(card_index - 1)
 
         return card_to_play
 
@@ -133,23 +133,11 @@ class Player:
         2. Using the nn predicton (exploitation) otherwise.
         '''
 
-        global steps_done
-
-        # Find the new threshold that changes with the number of steps
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-                        math.exp(-1. * steps_done / EPS_DECAY)
-        steps_done += 1
-
-
-        # Under the threshold we just use the random policy 
-        if random.random() < eps_threshold:
-                return self.random_action()
-        
-        # Over the threshold we use the nn prediction
-        else:
-            card_id = self.brain.predict_next_action(state)
-            for card in self.cards:
-                if card.id == card_id:
-                        return card
+        card_id = self.brain.predict_next_action(torch.tensor([state], 
+                                                dtype=torch.float32))
+        for card in self.cards:
+            if card.id == card_id:
+                self.cards.remove(card)
+                return card
 
 
