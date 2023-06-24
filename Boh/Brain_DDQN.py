@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from collections import namedtuple, deque
 import random
 import numpy as np
-import Game as Briscola
+import Train as Briscola
 
 LEARNING_RATE = 0.00025
 BATCH_SIZE = 256
@@ -14,6 +14,7 @@ GAMMA = 0.99
 LAMBDA = 0.0001 
 LR = 1e-2
 TAU = 0.005
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 # TODO capire come fare il training e salvare il modello 
@@ -51,7 +52,7 @@ class Brain:
             self.optimizer = optim.AdamW(self.model.parameters(), lr=LR, 
                                     amsgrad=True)
             self.memory = ReplayMemory(10000)
-            self.env = Briscola.Game()
+            self.env = Briscola.Game_Train()
 
 
         # TODO come fare quando abbiamo già il modello?
@@ -139,7 +140,7 @@ class Brain:
     
 
     
-    def train(self, x, y, epoch=1, verbose=0):
+    def train(self):
 
         # TODO finisci funzione !!!
         if torch.cuda.is_available():
@@ -155,10 +156,8 @@ class Brain:
             state = torch.tensor(state, dtype=torch.float32, 
                                 device=device).unsqueeze(0)
             for _ in range(20):
-
                 # Let the agent choose the action
-                action = self.env.player_1.get_action(state, 
-                                                    self.env.card_on_table)
+                action = self.env.get_action_train(state, self.env.player_1, self)
                 
                 # Perform the action and see where it will lead to
                 observation, reward, done = self.env.step(action)
@@ -189,11 +188,6 @@ class Brain:
 
                 if done:
                     break
-
-        print('Complete')
-        plot_durations(show_result=True)
-        plt.ioff()
-        plt.show()
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -230,4 +224,3 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         return self.layer3(x)
     
-

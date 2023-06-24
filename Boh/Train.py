@@ -1,50 +1,59 @@
 from Objects import Deck
-from Players import Player
 import numpy as np
+import random
+import math
 
-# --------------------------- GAME CLASS ---------------------------
+steps_done = 0
+EPS_START = 0.9
+EPS_END = 0.05
+EPS_DECAY = 1000
 
-class Game:
 
-    def __init__(self, policy):
+
+class Game_Train():
+
+    def __init__(self):
 
         self.deck = Deck()
-        self.player_1 = Player(self.deck.draw_first_hand(), policy[0])
-        self.player_2 = Player(self.deck.draw_first_hand(), policy[1])
+        
+        self.player_1 = {'cards': self.deck.draw_first_hand(), 
+                        'policy': 'Q_learning', 'points': 0}
+        self.player_2 = {'cards': self.deck.draw_first_hand(), 
+                        'policy': 'Random', 'points': 0}
 
-        self.state = self.initial_state(self.player_1.cards, 
-                                        self.player_2.cards, 
+        self.state = self.initial_state(self.player_1['cards'], 
+                                        self.player_2['cards'], 
                                         self.deck.briscola)
         
-        self.player_1.state = self.get_state_for_player(1)
-        self.player_2.state = self.get_state_for_player(2)
+        self.player_1_state = self.get_state_for_player(1)
+        self.player_2_state = self.get_state_for_player(2)
         
         self.first_to_play = np.random.randint(3)
         self.card_on_table = None
+
 
     def reset(self):
         '''
         Reset the game after a game
         '''
         self.deck = Deck()
-        self.player_1 = Player(self.deck.draw_first_hand(), 
-                            self.player_1.policy)
-        self.player_2 = Player(self.deck.draw_first_hand(),
-                            self.player_2.policy)
+        self.player_1 = {'cards': self.deck.draw_first_hand(), 
+                        'policy': 'Q_learning', 'points': 0}
+        self.player_2 = {'cards': self.deck.draw_first_hand(), 
+                        'policy': 'Random', 'points': 0}
 
-        self.state = self.initial_state(self.player_1.cards, 
-                                        self.player_2.cards, 
+        self.state = self.initial_state(self.player_1['cards'], 
+                                        self.player_2['cards'], 
                                         self.deck.briscola)
         
-        self.player_1.state = self.get_state_for_player(1)
-        self.player_2.state = self.get_state_for_player(2)
+        self.player_1_state = self.get_state_for_player(1)
+        self.player_2_state = self.get_state_for_player(2)
         
         self.first_to_play = np.random.randint(3)
         self.card_on_table = None
 
 
-
-    # -------------------- STATE FUNCTIONS --------------------
+# -------------------- STATE FUNCTIONS --------------------
 
     def initial_state(self, cards_1, cards_2, briscola):
         '''
@@ -169,78 +178,121 @@ class Game:
             self.state[card_2.id] = 4 if card_2.is_Briscola else 3
 
 
-    # ------------------- GAME SIMULATION FUNCTIONS -------------------
+    # ------------------- Q LEARN FUNCTIONS -------------------
 
-    def game_simulation(self):
+    def step(self, card):
         '''
-        Function that simulate a game of briscola. 
+        Function that finds the new 
         '''
+        winner = None
+        if self.first_to_play == 1:
+            self.update_state_after_play(card, 6, True)
+        else:
+            self.update_state_after_play(card, 7)
+            winner = self.find_hand_winner(card, self.card_on_table, 2)
 
-        done = False
+        done = self.finish_step(winner)
 
-        while(not done):
-            self.hand()
-            self.update_state_after_hand()
-
-            if not len(self.player_1.cards):
-                break
-
-            if len(self.deck.deck):
-                card_1 = self.deck.draw_card()
-                card_2 = self.deck.draw_card()
-
-                if(self.first_to_play == 1):
-                    self.player_1.cards.append(card_1)
-                    self.player_2.cards.append(card_2)
-                    self.update_state_after_draw(card_1, card_2)
-                else:
-                    self.player_1.cards.append(card_2)
-                    self.player_2.cards.append(card_1)
-                    self.update_state_after_draw(card_2, card_1)
-                    
-
-        final_score = self.player_1.points - self.player_2.points
+        if done:
+            return (self.get_state_for_player(1), 
+                self.player_1['points'] - self.player_2['points'], done)
+            
+        return (self.get_state_for_player(1), 0, done)
 
     
+
+    def finish_step(self, winner):
         '''
-        if self.player_1.policy == 'dnq_policy':
-            #TODO give reward
-
-        if self.player_1.policy == 'dnq_policy':
-            #TODO give reward
+        Function that finishes the step done before and set up for 
+        the new iteration.
         '''
-        # Reset for the new game
-        self.reset()
+        # The hand was not finished
+        if not winner:
+            # Let player 2 play it's card
+            state = self.get_state_for_player(2)
+            card = self.get_action_train(state, self.player_2)
+            self.update_state_after_play(card, 9)
 
-        return final_score
+            # Fine the new winner
+            winner = self.find_hand_winner(self.card_on_table[0], card, 1)
+            self.first_to_play == winner
 
+        # Now we have the end of the hand so we update the state
+        self.update_state_after_hand()
 
+        # If the game is over return
+        if not len(self.player_1['cards']):
+                return True
 
-    def hand(self, Q_learning = None):
+        # If there are still cards in the deck set up for the new iteration
+        if len(self.deck.deck):
+            card_1 = self.deck.draw_card()
+            card_2 = self.deck.draw_card()
+
+            if(self.first_to_play == 1):
+                self.player_1['cards'].append(card_1)
+                self.player_2['cards'].append(card_2)
+                self.update_state_after_draw(card_1, card_2)
+            else:
+                self.player_1['cards'].append(card_2)
+                self.player_2['cards'].append(card_1)
+                self.update_state_after_draw(card_2, card_1)
+
+        # If the first to play in the new hand is player 2
+        if self.first_to_play == 2:
+            state = self.get_state_for_player(2)
+            card = self.get_action_train(state, self.player_2)
+            self.update_state_after_play(card, 8, True)
+
+        return False
+    
+
+    # -------------------- GET ACTION FUNCTION --------------------
+
+    def get_action_train(self, state, player, brain = None):
+        if player['policy'] == 'Random':
+            return self.random_action(player)
+        else: 
+            return self.Q_action(state, player, brain)
+            
+    
+
+    def Q_action(self, state, player, brain):
         '''
-        Simulate one hand of the game.
+        Choose the card:
+        1. Randomly (exploration) if the random number is less than eps.
+        2. Using the nn predicton (exploitation) otherwise.
         '''
-        if self.first_to_play == 1:
-            state_1 = self.get_state_for_player(1)
-            card_1 = self.player_1.get_action(state_1, self.card_on_table)
-            self.update_state_after_play(card_1, 6, True)
-            state_2 = self.get_state_for_player(2)
-            card_2 = self.player_2.get_action(state_2, self.card_on_table)
-            self.update_state_after_play(card_2, 9)
 
+        global steps_done
+
+        # Find the new threshold that changes with the number of steps
+        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+                        math.exp(-1. * steps_done / EPS_DECAY)
+        steps_done += 1
+
+
+        # Under the threshold we just use the random policy 
+        if random.random() < eps_threshold:
+                return self.random_action(player)
+        
+        # Over the threshold we use the nn prediction
         else:
-            state_2 = self.get_state_for_player(2)
-            card_2 = self.player_2.get_action(state_2, self.card_on_table)
-            self.update_state_after_play(card_2, 8, True)
-            state_1 = self.get_state_for_player(1)
-            card_1 = self.player_1.get_action(state_1,
-                                            self.card_on_table)
-            self.update_state_after_play(card_1, 7)
+            card_id = brain.predict_next_action(state)
+            for card in player['cards']:
+                if card.id == card_id:
+                        return card
 
-        self.first_to_play = self.find_hand_winner(card_1, card_2, 
-                                            self.player_1, self.player_2,
-                                            self.first_to_play)
 
+
+    def random_action(self, player):
+        card_index = np.random.randint(len(player['cards']))
+        card_to_play = player['cards'].pop(card_index)
+
+        return card_to_play
+    
+
+    # -------------------- GAME FUNCTIONS USED TO TRAIN --------------------
 
 
     def find_hand_winner(self, card_1, card_2, first):
@@ -253,26 +305,26 @@ class Game:
         # Both players played a card with the same seed
         if card_1.seed == card_2.seed:
             if card_1.value >= card_2.value and card_1.numb > card_2.numb:
-                self.player_1.points += points
+                self.player_1['points'] += points
                 return 1
             else:
-                self.player_2.points += points
+                self.player_2['points'] += points
                 return 2
         
         # One player played a briscola and the other didn't
         if card_1.is_Briscola:
-            self.player_1.points += points
+            self.player_1['points'] += points
             return 1
         elif card_2.is_Briscola:
-            self.player_2.points += points
+            self.player_2['points'] += points
             return 2
         
         # If the seeds are different and there are no briscole then 
         # who played first wins.
         else:
             if first == 1:
-                self.player_1.points += points
+                self.player_1['points'] += points
                 return 1
             else:
-                self.player_2.points += points
+                self.player_2['points'] += points
                 return 2
