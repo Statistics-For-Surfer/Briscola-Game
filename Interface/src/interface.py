@@ -48,9 +48,9 @@ class Briscola(object):
         self.card_space_h = self.HEIGHT / 33
         self.first_card_pos = self.WIDTH/2 - (self.card_w *.5) - self.card_space_w
         self.card_smoothing = 10
-        self.card_backside = self.load_card_img("images/card_backside.png")
-        self.logo = pygame.image.load("images/big_logo.png")
-        self.small_logo = pygame.image.load("images/small_logo.png")
+        self.card_backside = self.load_card_img("Interface/images/card_backside.png")
+        self.logo = pygame.image.load("Interface/images/big_logo.png")
+        self.small_logo = pygame.image.load("Interface/images/small_logo.png")
         self.table_color = '#207438'
         self.font = pygame.font.SysFont('candara', int(self.WIDTH * .029))
         self.button_font = pygame.font.SysFont('georgia', int(self.WIDTH * .031))
@@ -212,7 +212,7 @@ class Briscola(object):
         values = [11, 0, 10, 0, 0, 0, 0, 2, 3, 4]
         for seed in seeds:
             for j, card in enumerate(cards):
-                self.img_card_dict[f'images/cards/{seed}_{card}.png'] = (seed, card, values[j])
+                self.img_card_dict[f'Interface/images/cards/{seed}_{card}.png'] = (seed, card, values[j])
 
 
     def load_card_img(self, path):
