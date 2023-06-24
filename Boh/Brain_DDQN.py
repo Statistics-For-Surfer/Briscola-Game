@@ -22,17 +22,17 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Utile?
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 
-def find_all_valid_actions(self, states):
+def find_all_valid_actions(states):
         '''
         Function that given the player's state give back the cards that
         the player is allowed to play.
         '''
 
         valid = []
-        for i, state in enumerate(states):
+        for i, state in enumerate(states[0]):
             # State 1 and 2 are the ones corresponding to card in the 
             # hand of the player. 1 not briscola, 2 briscola
-            if state in [1,2]:
+            if int(state) in [1,2]:
                 valid.append(i)
             
         return valid
@@ -115,9 +115,9 @@ class Brain:
         '''
 
         if target:
-            return self.model_.predict(state.reshape(1, self.stateCnt), target)
+            return self.model_.forward(state.reshape(1, self.stateCnt))
         else:
-            return self.model.predict(state.reshape(1, self.stateCnt), target)
+            return self.model.forward(state.reshape(1, self.stateCnt))
 
 
     def predict_next_action(self, state, target=False): 
@@ -133,8 +133,9 @@ class Brain:
         next_Qs = self.predict(state, target).flatten()
         # Select the one that are actually valid
         next_Qs = next_Qs[valid_actions]
+
         # The best valid action
-        idx = np.argmax(next_Qs)
+        idx = torch.argmax(next_Qs)
 
         return valid_actions[idx]
     
@@ -158,6 +159,8 @@ class Brain:
             for _ in range(20):
                 # Let the agent choose the action
                 action = self.env.get_action_train(state, self.env.player_1, self)
+                tensor_actions = torch.zeros(40)
+                tensor_actions[action.id] = 1
                 
                 # Perform the action and see where it will lead to
                 observation, reward, done = self.env.step(action)
@@ -170,7 +173,7 @@ class Brain:
                                             device=device).unsqueeze(0)
 
                 # Store the transition in memory
-                self.memory.push(state, action, next_state, reward)
+                self.memory.push(state, tensor_actions, next_state, reward)
 
                 # Move to the next state
                 state = next_state
