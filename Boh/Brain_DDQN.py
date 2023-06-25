@@ -90,9 +90,10 @@ class Brain:
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        next_state_values = torch.zeros(BATCH_SIZE, device=device, dtype= torch.float64)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.model_(non_final_next_states).max(1)[0]
+            # next_state_values[non_final_mask] = self.predict_next_action(non_final_next_states)
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -106,6 +107,7 @@ class Brain:
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.model.parameters(), 100)
         self.optimizer.step()
+        return loss
 
 
     def predict(self, state, target=False):
@@ -146,15 +148,17 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 10000
         else:
-            num_episodes = 3000
+            num_episodes = 5000
 
+        wins = []
+        loss = []
         print(num_episodes)
         for i_episode in tqdm(range(num_episodes)):
             # Initialize the environment and get it's state
             self.env.reset()
             self.env.first_to_play = 1
             state = self.env.get_state_for_player(1)
-            state = torch.tensor(state, dtype=torch.float32, 
+            state = torch.tensor(state, dtype=torch.float64, 
                                 device=device).unsqueeze(0)
             for _ in range(20):
                 # Let the agent choose the action
@@ -172,7 +176,7 @@ class Brain:
                 if done:
                     next_state = None
                 else:
-                    next_state = torch.tensor(observation, dtype=torch.float32, 
+                    next_state = torch.tensor(observation, dtype=torch.float64, 
                                             device=device).unsqueeze(0)
 
                 # Store the transition in memory
@@ -182,7 +186,7 @@ class Brain:
                 state = next_state
 
                 # Perform one step of the optimization (on the policy network)
-                self.optimize_model()
+                loss.append(self.optimize_model())
 
                 #print(self.model.state_dict())
 
@@ -196,8 +200,9 @@ class Brain:
 
                 if done:
                     break
-                    
+            wins.append(np.sign(reward[0]) if reward[0] else 0)
         torch.save(self.model, 'model.pt')
+        return wins, loss
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -223,9 +228,9 @@ class DQN(nn.Module):
 
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 128, dtype=torch.float32)
-        self.layer2 = nn.Linear(128, 128, dtype=torch.float32)
-        self.layer3 = nn.Linear(128, n_actions, dtype=torch.float32)
+        self.layer1 = nn.Linear(n_observations, 128, dtype=torch.float64)
+        self.layer2 = nn.Linear(128, 128, dtype=torch.float64)
+        self.layer3 = nn.Linear(128, n_actions, dtype=torch.float64)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).

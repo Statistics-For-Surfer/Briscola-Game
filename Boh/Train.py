@@ -184,6 +184,9 @@ class Game_Train():
         '''
         Function that finds the new 
         '''
+        init_score_1 = self.player_1['points']
+        init_score_2 = self.player_2['points']
+        
         winner = None
         if self.first_to_play == 1:
             self.update_state_after_play(card, 6, True)
@@ -196,9 +199,12 @@ class Game_Train():
 
         if done:
             return (self.get_state_for_player(1), 
-                self.player_1['points'] - self.player_2['points'], done)
-            
-        return (self.get_state_for_player(1), 0, done)
+                (self.player_1['points'] - self.player_2['points'])*2, done)
+        
+        hand_point_1 = init_score_1 - self.player_1['points']
+        hand_point_2 = init_score_2 - self.player_2['points']
+
+        return (self.get_state_for_player(1), hand_point_1 - hand_point_2, done)
 
     
 

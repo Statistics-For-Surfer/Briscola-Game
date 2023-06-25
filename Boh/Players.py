@@ -134,7 +134,7 @@ class Player:
         '''
 
         card_id = self.brain.predict_next_action(torch.tensor([state], 
-                                                dtype=torch.float32))
+                                                dtype=torch.float64))
         for card in self.cards:
             if card.id == card_id:
                 self.cards.remove(card)
