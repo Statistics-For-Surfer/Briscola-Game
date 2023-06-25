@@ -29,7 +29,6 @@ def find_all_valid_actions(states):
 
         valid = []
 
-        
         for i, state in enumerate(states[0]):
             # State 1 and 2 are the ones corresponding to card in the 
             # hand of the player. 1 not briscola, 2 briscola
@@ -92,8 +91,8 @@ class Brain:
         # state value or 0 in case the state was final.
         next_state_values = torch.zeros(BATCH_SIZE, device=device, dtype= torch.float64)
         with torch.no_grad():
-            next_state_values[non_final_mask] = self.model_(non_final_next_states).max(1)[0]
-            # next_state_values[non_final_mask] = self.predict_next_action(non_final_next_states)
+            next_state_values[non_final_mask] = (non_final_next_states.eq(1)*self.model_(non_final_next_states)).max(1)[0]
+        
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -132,13 +131,15 @@ class Brain:
         
         # Get the predictions of the nn
         next_Qs = self.predict(state, target).flatten()
-
         # Select the one that are actually valid
         next_Qs = next_Qs[valid_actions]
 
         # The best valid action
         idx = torch.argmax(next_Qs)
-
+        
+        if target:
+            return next_Qs[idx]
+        
         return valid_actions[idx]
 
 

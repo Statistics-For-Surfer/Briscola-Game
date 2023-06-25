@@ -229,7 +229,7 @@ class Game_Train():
 
         # If the game is over return
         if not len(self.player_1['cards']):
-                return True
+            return True
 
         # If there are still cards in the deck set up for the new iteration
         if len(self.deck.deck):
@@ -291,7 +291,8 @@ class Game_Train():
             card_id = brain.predict_next_action(state)
             for card in player['cards']:
                 if card.id == card_id:
-                        return card
+                    player['cards'].remove(card)
+                    return card
 
 
 
