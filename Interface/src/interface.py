@@ -54,10 +54,12 @@ class Briscola(object):
         self.table_color = '#207438'
         self.font = pygame.font.SysFont('candara', int(self.WIDTH * .029))
         self.button_font = pygame.font.SysFont('georgia', int(self.WIDTH * .031))
+        self.level_font = pygame.font.SysFont('georgia', int(self.WIDTH * .019))
         self.label_color = 'black'
         self.running = True
         self.active = False
         self.reactive = False
+        self.level = 0
 
 
     def clean_values(self):
@@ -81,12 +83,51 @@ class Briscola(object):
         self.screen.fill(self.table_color)
         w, h = 300, 100
         x, y = (self.WIDTH - w) /2, (self.HEIGHT - h) /2
+
         self.start_button = pygame.draw.rect(self.screen, 'white', [x, y, w, h], 0, self.card_smoothing)
         pygame.draw.rect(self.screen, 'darkgray', [x, y, w, h], 7, self.card_smoothing)
         pygame.draw.rect(self.screen, 'black', [x, y, w, h], 5, self.card_smoothing)
+
         text = self.button_font.render('START', True, 'black')
         self.screen.blit(text, text.get_rect(center = (x+w/2, y+h/2)))
         self.screen.blit(self.logo, self.logo.get_rect(center = (self.WIDTH/2, self.HEIGHT/4)))
+        self.levels_interface()
+
+
+    def levels_interface(self):
+        w, h = 300, 100
+        level_text = self.button_font.render('Select game level', True, 'black')
+        self.screen.blit(level_text, level_text.get_rect(center = (self.WIDTH/2, self.HEIGHT/6*4.2)))
+
+        self.easy_level_button = pygame.draw.rect(self.screen, self.table_color, [self.WIDTH/2 - self.card_w*1.42, self.HEIGHT/6*4.5, w/4, h/2], 0)
+        easy_level = self.level_font.render('Easy', True, 'black')
+        self.screen.blit(easy_level, easy_level.get_rect(center = (self.WIDTH/2 - self.card_w*1.1, self.HEIGHT/6*5)))
+
+        self.medium_level_button = pygame.draw.rect(self.screen, self.table_color, [self.WIDTH/2 - self.card_w*0.32, self.HEIGHT/6*4.5, w/4, h/2], 0)
+        medium_level = self.level_font.render('Intermediate', True, 'black')
+        self.screen.blit(medium_level, medium_level.get_rect(center = (self.WIDTH/2, self.HEIGHT/6*5)))
+
+        self.hard_level_button = pygame.draw.rect(self.screen, self.table_color, [self.WIDTH/2 + self.card_w*0.78, self.HEIGHT/6*4.5, w/4, h/2], 0)
+        hard_level = self.level_font.render('Hard', True, 'black')
+        self.screen.blit(hard_level, hard_level.get_rect(center = (self.WIDTH/2 + self.card_w*1.1, self.HEIGHT/6*5)))
+        self.select_level()
+
+
+    def select_level(self):
+
+        empty_color = 'gray'
+        pygame.draw.circle(self.screen, empty_color, (self.WIDTH/2 - self.card_w*1.1, self.HEIGHT/6*4.7), 7)
+        pygame.draw.circle(self.screen, empty_color, (self.WIDTH/2, self.HEIGHT/6*4.7), 7)
+        pygame.draw.circle(self.screen, empty_color, (self.WIDTH/2 + self.card_w*1.1, self.HEIGHT/6*4.7), 7)
+
+        if self.level == 1:
+            pygame.draw.circle(self.screen, 'black', (self.WIDTH/2 - self.card_w*1.1, self.HEIGHT/6*4.7), 5)
+            
+        elif self.level == 3:
+            pygame.draw.circle(self.screen, 'black', (self.WIDTH/2 + self.card_w*1.1, self.HEIGHT/6*4.7), 5)
+             
+        else:
+            pygame.draw.circle(self.screen, 'black', (self.WIDTH/2, self.HEIGHT/6*4.7), 5)
 
 
     def build_game(self):
@@ -187,9 +228,24 @@ class Briscola(object):
         # Condition for game over.
         if len(self.bot_hand) == 1:
             self.over = True
+ 
+        # Remove previous position.
+        pos = None
 
-        # For now choose a random card by position andget img and info.
-        pos = random.choice(self.bot_hand)
+        # Easy level: random choice.
+        if self.level == 1:
+            pos = random.choice(self.bot_hand)
+
+        # Intermediate level: greedy choice.
+        elif self.level == 2:
+            print('I still not have a greedy brain!!')
+            self.running = False
+
+        # Hard level: reinforced choice.
+        elif self.level == 3:
+            print('I still not have a super brain!!')
+            self.running = False
+
         img, card_id = self.rect_img_dict[str(pos)]
 
         # Remove position from mapping dictionary.
@@ -425,6 +481,8 @@ class Briscola(object):
         self.last_two_hand = False
         self.bot_points, self.player_points, self.points = 0, 0, 0
         self.rect_img_dict, self.img_card_dict = {}, {}
+        self.level = 0
+        self.levels_interface()
 
 
     def run(self):
@@ -443,11 +501,26 @@ class Briscola(object):
                     if self.start_button.collidepoint(self.event.pos):
                         self.active = True
                         continue
+
                 elif self.event.type == pygame.MOUSEBUTTONDOWN and not self.active and self.reactive:
                     if self.restart_button.collidepoint(self.event.pos):
                         self.active = True
                         self.reactive = False
                         continue
+
+                # Levels.
+                if self.event.type == pygame.MOUSEBUTTONDOWN and not self.active:
+                    if self.easy_level_button.collidepoint(self.event.pos):
+                        self.level = 1
+                        self.select_level()
+
+                    elif self.medium_level_button.collidepoint(self.event.pos):
+                        self.level = 2
+                        self.select_level()
+
+                    elif self.hard_level_button.collidepoint(self.event.pos):
+                        self.level = 3
+                        self.select_level()
 
 
                 if self.active:
