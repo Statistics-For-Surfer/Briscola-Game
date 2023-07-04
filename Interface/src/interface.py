@@ -32,7 +32,7 @@ class CardPosition(object):
 
 
 
-class Briscola(object):
+class BriscolaApp(object):
     def __init__(self):
 
         pygame.display.set_caption('Pausetta Briscola?')
@@ -232,18 +232,18 @@ class Briscola(object):
         # Remove previous position.
         pos = None
 
-        # Easy level: random choice.
+        # EASY LEVEL: random choice.
         if self.level == 1:
             pos = random.choice(self.bot_hand)
 
-        # Intermediate level: greedy choice.
+        # INTERMEDIATE LEVEL: greedy choice.
         elif self.level == 2:
             print('I still not have a greedy brain!!')
             self.running = False
 
-        # Hard level: reinforced choice.
+        # HARD LEVEL: reinforced choice.
         elif self.level == 3:
-            print('I still not have a super brain!!')
+            print('I still not have a reinforced brain!!')
             self.running = False
 
         img, card_id = self.rect_img_dict[str(pos)]
