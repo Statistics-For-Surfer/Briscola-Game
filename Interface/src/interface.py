@@ -499,11 +499,13 @@ class BriscolaApp(object):
                     self.running = False
                 elif self.event.type == pygame.MOUSEBUTTONDOWN and not self.active and not self.reactive:
                     if self.start_button.collidepoint(self.event.pos):
+                        if self.level == 0: self.level = 2
                         self.active = True
                         continue
 
                 elif self.event.type == pygame.MOUSEBUTTONDOWN and not self.active and self.reactive:
                     if self.restart_button.collidepoint(self.event.pos):
+                        if self.level == 0: self.level = 2
                         self.active = True
                         self.reactive = False
                         continue
