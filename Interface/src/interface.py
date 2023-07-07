@@ -49,8 +49,6 @@ class BriscolaApp(object):
         self.first_card_pos = self.WIDTH/2 - (self.card_w *.5) - self.card_space_w
         self.card_smoothing = 10
         self.card_backside = self.load_card_img("Interface/images/card_backside.png")
-        self.logo = pygame.image.load("Interface/images/greta.png")
-        self.logo = pygame.transform.scale(self.logo, (self.card_w*2.5, self.card_h*1.3))
         self.small_logo = pygame.image.load("Interface/images/small_logo.png")
         self.table_color = '#207438'
         self.font = pygame.font.SysFont('candara', int(self.WIDTH * .029))
@@ -63,6 +61,10 @@ class BriscolaApp(object):
         self.reactive = False
         self.level = 0
 
+        # Logos
+        random_logo = random.choice(['ferragni', 'greta', 'paolo_1'])
+        self.logo = pygame.image.load(f"Interface/images/logos/{random_logo}.png")
+        self.logo = pygame.transform.scale(self.logo, (self.card_w*2.5, self.card_h*1.3))
 
     def clean_values(self):
         '''Clean saved values from previous game'''
