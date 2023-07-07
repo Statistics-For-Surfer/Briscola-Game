@@ -1,3 +1,4 @@
+import os
 import random
 import pygame
 
@@ -60,11 +61,14 @@ class BriscolaApp(object):
         self.active = False
         self.reactive = False
         self.level = 0
+        self.get_random_logo()
 
-        # Logos
-        random_logo = random.choice(['ferragni', 'greta', 'paolo_1'])
-        self.logo = pygame.image.load(f"Interface/images/logos/{random_logo}.png")
+
+    def get_random_logo(self):
+        random_logo = random.choice(os.listdir('Interface/images/logos'))
+        self.logo = pygame.image.load(f"Interface/images/logos/{random_logo}")
         self.logo = pygame.transform.scale(self.logo, (self.card_w*2.5, self.card_h*1.3))
+
 
     def clean_values(self):
         '''Clean saved values from previous game'''
@@ -541,6 +545,7 @@ class BriscolaApp(object):
                     if self.event.type == pygame.MOUSEBUTTONDOWN:
                         if self.change_level_button.collidepoint(self.event.pos):
                             self.active, self.reactive = False, False
+                            self.get_random_logo()
                             continue
 
                     # Check if the game match is over and possibly start another one.
