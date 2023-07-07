@@ -1,0 +1,70 @@
+from _scoring_functions import ace_degenerate_scoring
+import numpy as np
+
+def get_idx(card, state):
+
+    n_states = 8
+
+    return card * n_states + state
+
+
+
+def draw_new_card(player_board, deck):
+    '''draw the card from the deck'''
+    player_board.hand.append(deck.pop(0))
+
+
+def make_move(player_board, deck, action, state, flex_options, player, p1_obs, p2_obs):
+
+    card = action[0]
+    play = action[1]
+
+
+    if play:
+        player_board.play_card(card)
+        update_state_play(state, card, flex_options, player, player_board, p1_obs, p2_obs)
+
+
+
+    new_card = draw_new_card(player_board, deck)
+    update_state_draw(state, new_card, player, p1_obs, p2_obs)
+
+
+
+
+def winner_from_two_card(card_1 , card_2 , first, player_1 , player_2, briscola):
+    '''
+    card_1 : carta del player 1 già mappata
+    card_2 : carta del player 2 già mappata
+    player_1 : player 1 playerboard 
+    player_2 : player 2 playerboard
+    first : 1,2 a seconda se il player 1 a giocare a o viceversa
+    cosa fa: update degli score
+    '''
+    
+    # Select the winner of the hand
+    '''caso briscole'''
+    points = card_1[2] + card_2[2]
+
+    if card_1[0] == card_2[0]:
+        if card_1[2] > card_2[2]:
+            player_1.score += points
+        else:
+            player_2.score += points   
+    else:
+        if card_1[0] == briscola:
+            player_1.score += points
+        elif card_2[0] == briscola:
+            player_2.score += points
+        elif first == 1:
+            player_1.score += points
+        else:
+            player_2.score += points
+
+
+
+
+
+
+
+
