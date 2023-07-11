@@ -41,9 +41,9 @@ class BriscolaApp(object):
 
         self.WIDTH = 1200
         self.HEIGHT = self.WIDTH / 3 * 2
+        self.w, self.h = self.WIDTH/4, self.HEIGHT/8
         self.screen = pygame.display.set_mode([self.WIDTH, self.HEIGHT])
         self.card_w = self.WIDTH * .097
-        # self.card_h = self.card_w * 9.4 / 5
         self.card_h = self.card_w * 285 / 177
         self.card_space_w = self.card_w + 20
         self.card_space_h = self.HEIGHT / 33
@@ -67,7 +67,7 @@ class BriscolaApp(object):
     def get_random_logo(self):
         random_logo = random.choice(os.listdir('Interface/images/logos'))
         self.logo = pygame.image.load(f"Interface/images/logos/{random_logo}")
-        self.logo = pygame.transform.scale(self.logo, (self.card_w*2.5, self.card_h*1.3))
+        self.logo = pygame.transform.scale(self.logo, (self.WIDTH*0.2, self.HEIGHT*0.25))
 
 
     def clean_values(self):
@@ -89,15 +89,14 @@ class BriscolaApp(object):
         '''Create initial page'''
 
         self.screen.fill(self.table_color)
-        w, h = 300, 100
-        x, y = (self.WIDTH - w) /2, (self.HEIGHT - h) /2
+        x, y = (self.WIDTH - self.w) /2, (self.HEIGHT - self.h) /2
 
-        self.start_button = pygame.draw.rect(self.screen, 'white', [x, y, w, h], 0, self.card_smoothing)
-        pygame.draw.rect(self.screen, 'darkgray', [x, y, w, h], 7, self.card_smoothing)
-        pygame.draw.rect(self.screen, 'black', [x, y, w, h], 5, self.card_smoothing)
+        self.start_button = pygame.draw.rect(self.screen, 'white', [x, y,self.w, self.h], 0, self.card_smoothing)
+        pygame.draw.rect(self.screen, 'darkgray', [x, y, self.w, self.h], 7, self.card_smoothing)
+        pygame.draw.rect(self.screen, 'black', [x, y, self.w, self.h], 5, self.card_smoothing)
 
         text = self.button_font.render('START', True, 'black')
-        self.screen.blit(text, text.get_rect(center = (x+w/2, y+h/2)))
+        self.screen.blit(text, text.get_rect(center = (x+self.w/2, y+self.h/2)))
         self.screen.blit(self.logo, self.logo.get_rect(center = (self.WIDTH/2, self.HEIGHT/4)))
         self.levels_interface()
 
@@ -193,11 +192,10 @@ class BriscolaApp(object):
         self.screen.blit(self.small_logo, self.small_logo.get_rect(center = (self.WIDTH/7, self.HEIGHT/2)))
 
         # Change level
-        w, h = 300, 100
-        pygame.draw.rect(self.screen, self.table_color, [self.WIDTH-w*0.55, h*0.35, w/2, h/2], 0, self.card_smoothing)
-        self.change_level_button = pygame.draw.rect(self.screen, 'black', [self.WIDTH-w*0.55, h*0.35, w/2, h/2], 3, self.card_smoothing)
+        pygame.draw.rect(self.screen, self.table_color, [self.WIDTH-self.w*0.55, self.h*0.35, self.w/2, self.h/2], 0, self.card_smoothing)
+        self.change_level_button = pygame.draw.rect(self.screen, 'black', [self.WIDTH-self.w*0.55, self.h*0.35, self.w/2, self.h/2], 3, self.card_smoothing)
         change_level_label = self.small_button_font.render('Change level', True, 'black')
-        self.screen.blit(change_level_label, change_level_label.get_rect(center = (self.WIDTH-w*0.55 + w/4, h*0.35 + h/4)))
+        self.screen.blit(change_level_label, change_level_label.get_rect(center = (self.WIDTH-self.w*0.55 + self.w/4, self.h*0.35 + self.h/4)))
 
         # Function to complete
         self.update_cards_left()
@@ -227,11 +225,11 @@ class BriscolaApp(object):
         pygame.draw.rect(self.screen, self.table_color, pos)
 
 
-    def select_bot_card(self):
+    def select_bot_card(self, i):
         '''Card selected by the bot'''
 
         # Add pause to make the game more enjoyble.
-        pygame.time.wait(1000)
+        pygame.time.wait(1000*i)
 
         # [INSERT BOT BRAIN]
         # Check if the game is arrived to last two hand to update bot_hand.
@@ -302,7 +300,7 @@ class BriscolaApp(object):
         '''Check who win the hand (True: player wins | False: bot wins)'''
 
         # Pause to make the game more enjoyble.
-        pygame.time.wait(1500)
+        pygame.time.wait(2000)
 
         # Get cards info to compare them.
         player_card = self.rect_img_dict[str(self.player_played_card_pos)][1]
@@ -335,10 +333,10 @@ class BriscolaApp(object):
                 self.player_points += self.points
             else:
                 if self.player_turn:
-                    self.player_turn, self.points = True, points
+                    self.points = points
                     self.player_points += self.points
                 else:
-                    self.player_turn, self.points = False, points
+                    self.points = points
                     self.bot_points += self.points
 
         # Condition to close the game.
@@ -416,9 +414,9 @@ class BriscolaApp(object):
             self.screen.blit(self.card_backside, self.deck_pos)
             x = self.deck.x + self.card_w/2
             y = self.deck.y + self.card_h/2
-            pygame.draw.circle(self.screen, 'black', (x, y), 20)
-            pygame.draw.circle(self.screen, 'white', (x, y), 18)
-            font = pygame.font.Font(None, 20)
+            pygame.draw.circle(self.screen, 'black', (x, y), int(self.WIDTH/75))
+            pygame.draw.circle(self.screen, 'white', (x, y), int(self.WIDTH/200*3))
+            font = pygame.font.Font(None, int(self.WIDTH/75))
             text = font.render(str(self.len_virtual_deck), True, 'black')
             self.screen.blit(text, text.get_rect(center = (x-1, y)))
 
@@ -471,13 +469,12 @@ class BriscolaApp(object):
 
         pygame.time.wait(1000)
         self.screen.fill(self.table_color)
-        w, h = 300, 100
-        x, y = (self.WIDTH - w) /2, (self.HEIGHT - h) /2
-        self.restart_button = pygame.draw.rect(self.screen, 'white', [x, y, w, h], 0, self.card_smoothing)
-        pygame.draw.rect(self.screen, 'darkgray', [x, y, w, h], 7, self.card_smoothing)
-        pygame.draw.rect(self.screen, 'black', [x, y, w, h], 5, self.card_smoothing)
+        x, y = (self.WIDTH - self.w) /2, (self.HEIGHT - self.h) /2
+        self.restart_button = pygame.draw.rect(self.screen, 'white', [x, y, self.w, self.h], 0, self.card_smoothing)
+        pygame.draw.rect(self.screen, 'darkgray', [x, y, self.w, self.h], 7, self.card_smoothing)
+        pygame.draw.rect(self.screen, 'black', [x, y, self.w, self.h], 5, self.card_smoothing)
         button_text = self.button_font.render('RESTART', True, 'black')
-        self.screen.blit(button_text, button_text.get_rect(center = (x+w/2, y+h/2)))
+        self.screen.blit(button_text, button_text.get_rect(center = (x+self.w/2, y+self.h/2)))
 
         points_text = self.button_font.render(f'{self.player_points} - {self.bot_points}', True, 'black')
         self.screen.blit(points_text, points_text.get_rect(center = (self.WIDTH/2, self.WIDTH/6)))
@@ -565,19 +562,19 @@ class BriscolaApp(object):
                             if self.event.type == pygame.MOUSEBUTTONDOWN:
                                 if self.player_card_1_pos.collidepoint(self.event.pos) and str(self.player_card_1_pos) in self.rect_img_dict.keys():
                                     self.select_card(self.player_card_1_pos)
-                                    self.select_bot_card()
+                                    self.select_bot_card(2)
                                     
                                 elif self.player_card_2_pos.collidepoint(self.event.pos) and str(self.player_card_2_pos) in self.rect_img_dict.keys():
                                     self.select_card(self.player_card_2_pos)
-                                    self.select_bot_card()
+                                    self.select_bot_card(2)
 
                                 elif self.player_card_3_pos.collidepoint(self.event.pos) and str(self.player_card_3_pos) in self.rect_img_dict.keys():
                                     self.select_card(self.player_card_3_pos)
-                                    self.select_bot_card()
+                                    self.select_bot_card(2)
 
                         # If it's not player turn just get the bot's card an put it in the middle.
                         else:
-                            self.select_bot_card()
+                            self.select_bot_card(1)
 
                     # If bot has select its card check the decision of the player and put his card in the middle.
                     elif str(self.player_played_card_pos) not in self.rect_img_dict.keys():
