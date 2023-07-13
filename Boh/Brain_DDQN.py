@@ -7,14 +7,12 @@ import random
 import numpy as np
 import Train as Briscola
 from tqdm import tqdm
-
 BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.0001 
 LR = 1e-1
 TAU = 0.005
 device = "cpu"
-
 
 # TODO capire come fare il training e salvare il modello 
 # 
@@ -147,9 +145,9 @@ class Brain:
     def train(self):
 
         if device == 'cuda0' :
-            num_episodes = 10000
+            num_episodes = 1000
         else:
-            num_episodes = 5000
+            num_episodes = 500
 
         wins = []
         loss = []
@@ -201,6 +199,7 @@ class Brain:
 
                 if done:
                     break
+                
             wins.append(np.sign(reward[0]) if reward[0] else 0)
         torch.save(self.model, 'model.pt')
         return wins, loss
@@ -240,3 +239,5 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         return self.layer3(x)
     
+
+

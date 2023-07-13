@@ -2,6 +2,7 @@ from Objects import Deck
 import numpy as np
 import random
 import math
+from tensorboardX import SummaryWriter
 
 steps_done = 0
 EPS_START = 0.9
@@ -9,6 +10,7 @@ EPS_END = 0.05
 EPS_DECAY = 1000
 
 
+writer = SummaryWriter()
 
 class Game_Train():
 
@@ -40,7 +42,7 @@ class Game_Train():
         self.player_1 = {'cards': self.deck.draw_first_hand(), 
                         'policy': 'Q_learning', 'points': 0}
         self.player_2 = {'cards': self.deck.draw_first_hand(), 
-                        'policy': 'Random', 'points': 0}
+                        'policy': 'Greedy', 'points': 0}
 
         self.state = self.initial_state(self.player_1['cards'], 
                                         self.player_2['cards'], 
@@ -204,6 +206,12 @@ class Game_Train():
         hand_point_1 = init_score_1 - self.player_1['points']
         hand_point_2 = init_score_2 - self.player_2['points']
 
+        writer.add_scalar('Reward', (self.player_1['points'] - self.player_2['points']) * 2, steps_done)
+        writer.add_scalar('Player1Points', self.player_1['points'], steps_done)
+        #writer.add_histogram('Player1Hand', np.array(self.player_1['cards']), steps_done)
+
+
+
         return (self.get_state_for_player(1), hand_point_1 - hand_point_2, done)
 
     
@@ -278,7 +286,7 @@ class Game_Train():
         # Find the new threshold that changes with the number of steps
         #eps_threshold = EPS_END + (EPS_START - EPS_END) * \
                         #math.exp(-1. * steps_done / EPS_DECAY)
-        eps_threshold = 0
+        eps_threshold = .69
         steps_done += 1
 
 
@@ -413,3 +421,4 @@ class Game_Train():
             else:
                 self.player_2['points'] += points
                 return 2
+writer.close()
