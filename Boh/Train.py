@@ -2,7 +2,6 @@ from Objects import Deck
 import numpy as np
 import random
 import math
-from tensorboardX import SummaryWriter
 
 steps_done = 0
 EPS_START = 0.9
@@ -10,7 +9,6 @@ EPS_END = 0.05
 EPS_DECAY = 1000
 
 
-writer = SummaryWriter()
 
 class Game_Train():
 
@@ -184,11 +182,13 @@ class Game_Train():
 
     def step(self, card):
         '''
-        Function that finds the new 
+        Function that finds the new  
         '''
         init_score_1 = self.player_1['points']
         init_score_2 = self.player_2['points']
         
+        #print(self.player_2['cards'])
+        print(self.player_1['cards'])
         winner = None
         if self.first_to_play == 1:
             self.update_state_after_play(card, 6, True)
@@ -206,10 +206,9 @@ class Game_Train():
         hand_point_1 = init_score_1 - self.player_1['points']
         hand_point_2 = init_score_2 - self.player_2['points']
 
-        writer.add_scalar('Reward', (self.player_1['points'] - self.player_2['points']) * 2, steps_done)
-        writer.add_scalar('Player1Points', self.player_1['points'], steps_done)
         #writer.add_histogram('Player1Hand', np.array(self.player_1['cards']), steps_done)
 
+        #print(hand_point_1 ,  hand_point_2)
 
 
         return (self.get_state_for_player(1), hand_point_1 - hand_point_2, done)
@@ -395,17 +394,25 @@ class Game_Train():
         '''
         points = card_2.value + card_1.value
 
+        #print('card2:', vars(card_2))
+        #print('card1:', vars(card_1))
+
         # Both players played a card with the same seed
         if card_1.seed == card_2.seed:
-            if card_1.value >= card_2.value and card_1.numb > card_2.numb:
+            if card_1.value > card_2.value:
+            #if card_1.value >= card_2.value and card_1.numb > card_2.numb:
                 self.player_1['points'] += points
                 return 1
+            elif card_1.value == card_2.value and card_1.numb > card_2.numb:
+                return 1
+            elif card_1.value == card_2.value and card_1.numb < card_2.numb:
+                return 2
             else:
                 self.player_2['points'] += points
                 return 2
         
         # One player played a briscola and the other didn't
-        if card_1.is_Briscola:
+        elif card_1.is_Briscola:
             self.player_1['points'] += points
             return 1
         elif card_2.is_Briscola:
@@ -421,4 +428,3 @@ class Game_Train():
             else:
                 self.player_2['points'] += points
                 return 2
-writer.close()

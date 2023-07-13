@@ -76,7 +76,7 @@ class Deck:
         deck = []
         for seed in seeds:
             for idx in range(10):
-                attrs = [card_id, seed, numbers[idx],values[idx]]
+                attrs = [card_id, numbers[idx],seed,values[idx]]
                 deck.append(Card(attrs))
                 card_id += 1
 

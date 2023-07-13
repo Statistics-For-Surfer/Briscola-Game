@@ -14,6 +14,7 @@ LR = 1e-1
 TAU = 0.005
 device = "cpu"
 
+
 # TODO capire come fare il training e salvare il modello 
 # 
 # Utile?
@@ -147,7 +148,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 500
+            num_episodes = 100
 
         wins = []
         loss = []
@@ -203,6 +204,9 @@ class Brain:
             wins.append(np.sign(reward[0]) if reward[0] else 0)
         torch.save(self.model, 'model.pt')
         return wins, loss
+    
+
+
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
