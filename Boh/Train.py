@@ -188,7 +188,7 @@ class Game_Train():
         init_score_2 = self.player_2['points']
         
         #print(self.player_2['cards'])
-        print(self.player_1['cards'])
+        #print(self.player_1['cards'])
         winner = None
         if self.first_to_play == 1:
             self.update_state_after_play(card, 6, True)

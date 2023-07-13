@@ -7,13 +7,27 @@ import random
 import numpy as np
 import Train as Briscola
 from tqdm import tqdm
+import wandb
 BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.0001 
 LR = 1e-1
 TAU = 0.005
 device = "cpu"
-
+wandb.login()
+# start a new wandb run to track this script
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="briscola_game",
+    
+    # track hyperparameters and run metadata
+    config={
+    "learning_rate": 0.02,
+    "architecture": "QNN",
+    "dataset": "NO",
+    "epochs": 100,
+    }
+)
 
 # TODO capire come fare il training e salvare il modello 
 # 
@@ -105,6 +119,7 @@ class Brain:
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.model.parameters(), 100)
         self.optimizer.step()
+        wandb.log({"loss": loss})
         return loss
 
 
