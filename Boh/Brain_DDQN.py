@@ -8,10 +8,10 @@ import numpy as np
 import Train as Briscola
 from tqdm import tqdm
 import wandb
-BATCH_SIZE = 20
+BATCH_SIZE = 200
 GAMMA = 0.99
-LAMBDA = 0.0001 
-LR = 0.00001 
+LAMBDA = 0.001 
+LR = 0.001 
 TAU = 0.005
 device = "cpu"
 
@@ -166,7 +166,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 1000
+            num_episodes = 1000000
 
         wins = []
         loss = []
