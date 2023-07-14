@@ -76,7 +76,7 @@ class BriscolaApp(object):
     def clean_values(self):
         '''Clean saved values from previous game'''
 
-        self.len_virtual_deck = 3 # Start with 33
+        self.len_virtual_deck = 33 # Start with 33
         self.player_turn = bool(random.randint(0, 1))
         self.last_two_hand = False
         self.bot_points, self.player_points, self.points = 0, 0, 0
@@ -654,6 +654,10 @@ class BriscolaApp(object):
                 self.clean_values()
                 self.build_game()
                 self.reactive = True
+
+            # Select bot card without any event.
+            if self.active and str(self.bot_played_card_pos) not in self.rect_img_dict.keys() and not self.player_turn:
+                self.select_bot_card()
             
             for self.event in pygame.event.get():
                 if self.event.type == pygame.QUIT:
@@ -683,7 +687,7 @@ class BriscolaApp(object):
                         self.level = 3
                         self.select_level()
 
-
+                # Change level button.
                 if self.active:
                     if self.event.type == pygame.MOUSEBUTTONDOWN:
                         if self.change_level_button.collidepoint(self.event.pos):
@@ -718,10 +722,6 @@ class BriscolaApp(object):
                                     self.select_card(self.player_card_3_pos)
                                     self.select_bot_card()
 
-                        # If it's not player turn just get the bot's card an put it in the middle.
-                        else:
-                            self.select_bot_card()
-
                     # If bot has select its card check the decision of the player and put his card in the middle.
                     elif str(self.player_played_card_pos) not in self.rect_img_dict.keys():
                         if self.event.type == pygame.MOUSEBUTTONDOWN:
@@ -738,6 +738,7 @@ class BriscolaApp(object):
                     # If both have select the cards check who win the hand.
                     elif str(self.player_played_card_pos) in self.rect_img_dict.keys() and str(self.bot_played_card_pos) in self.rect_img_dict.keys():
                         self.check_hand_winner()
+
 
 
             pygame.display.flip()
