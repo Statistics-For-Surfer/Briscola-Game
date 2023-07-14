@@ -373,15 +373,18 @@ class Game_Train():
                         card.is_Briscola):
 
                         possible_action.append(card)
-
         # I cannot take
         if len(possible_action) == 0:
             # I want to put the card with less points
-            return self.max_min_values(player['cards'], maxx = False)
+            c = self.max_min_values(player['cards'], maxx = False)
+            player['cards'].remove(c)
+            return c
 
         else:
             # I want to put the card with more points
-            return self.max_min_values(possible_action, maxx = True)
+            c = self.max_min_values(possible_action, maxx = True)
+            player['cards'].remove(c)
+            return c
     
 
     # -------------------- GAME FUNCTIONS USED TO TRAIN --------------------
