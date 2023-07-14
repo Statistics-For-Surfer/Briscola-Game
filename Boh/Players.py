@@ -81,7 +81,10 @@ class Player:
 
 
         if card_on_table == None:
-            return self.max_min_values(self.cards, maxx = False)
+            # I want to put the card with less points
+            c = self.max_min_values(self.cards, maxx = False)
+            self.cards.remove(c)
+            return c
         else:
             # The card on the table is a briscola
             if card_on_table.is_Briscola:
@@ -103,11 +106,15 @@ class Player:
         # I cannot take
         if len(possible_action) == 0:
             # I want to put the card with less points
-            return self.max_min_values(self.cards, maxx = False)
+            c = self.max_min_values(self.cards, maxx = False)
+            self.cards.remove(c)
+            return c
 
         else:
             # I want to put the card with more points
-            return self.max_min_values(possible_action, maxx = True)
+            c = self.max_min_values(possible_action, maxx = True)
+            self.cards.remove(c)
+            return c
     
 
     # -------------------- RANDOM PLAYER --------------------

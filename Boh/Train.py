@@ -121,7 +121,7 @@ class Game_Train():
 
         else: 
             # The state the player can be aware of
-            known_states = [i for i in range(11) if i not in [1,2]]
+            known_states = [i for i in range(11) if i not in [0,1,2]]
             for state in self.state:
                 # If the player can't know this state, set it to 0
                 if state not in known_states:
@@ -186,15 +186,13 @@ class Game_Train():
         '''
         init_score_1 = self.player_1['points']
         init_score_2 = self.player_2['points']
-        
-        #print(self.player_2['cards'])
-        #print(self.player_1['cards'])
+
         winner = None
         if self.first_to_play == 1:
             self.update_state_after_play(card, 6, True)
         else:
             self.update_state_after_play(card, 7)
-            winner = self.find_hand_winner(card, self.card_on_table, 2)
+            winner = self.find_hand_winner(card, self.card_on_table[0], 2)
             self.first_to_play = winner
 
         done = self.finish_step(winner)
@@ -224,12 +222,11 @@ class Game_Train():
         if not winner:
             # Let player 2 play it's card
             state = self.get_state_for_player(2)
-            card = self.get_action_train(state, self.player_2, self.card_on_table)
+            card = self.get_action_train(state, self.player_2)
             self.update_state_after_play(card, 9)
-
             # Fine the new winner
             winner = self.find_hand_winner(self.card_on_table[0], card, 1)
-            self.first_to_play == winner
+            self.first_to_play = winner
 
         # Now we have the end of the hand so we update the state
         self.update_state_after_hand()
@@ -255,7 +252,7 @@ class Game_Train():
         # If the first to play in the new hand is player 2
         if self.first_to_play == 2:
             state = self.get_state_for_player(2)
-            card = self.get_action_train(state, self.player_2, self.card_on_table)
+            card = self.get_action_train(state, self.player_2)
             self.update_state_after_play(card, 8, True)
 
         return False
@@ -263,17 +260,17 @@ class Game_Train():
 
     # -------------------- GET ACTION FUNCTION --------------------
 
-    def get_action_train(self, state, player, brain = None, card_on_table = None):
+    def get_action_train(self, state, player, brain = None):
         if player['policy'] == 'Random':
             return self.random_action(player)
         elif player['policy'] == 'Greedy':
-            return self.greedy_action(player, card_on_table)
+            return self.greedy_action(player, self.card_on_table)
         else: 
-            return self.Q_action(state, player, brain)
+            return self.Q_action(state, player, brain, self.card_on_table)
             
     
 
-    def Q_action(self, state, player, brain):
+    def Q_action(self, state, player, brain, card_on_table):
         '''
         Choose the card:
         1. Randomly (exploration) if the random number is less than eps.
@@ -285,13 +282,16 @@ class Game_Train():
         # Find the new threshold that changes with the number of steps
         #eps_threshold = EPS_END + (EPS_START - EPS_END) * \
                         #math.exp(-1. * steps_done / EPS_DECAY)
-        eps_threshold = .69
+        eps_threshold = .30
         steps_done += 1
 
 
         # Under the threshold we just use the random policy 
         if random.random() < eps_threshold:
-            return self.random_action(player)
+            card = self.random_action(player)
+            if card_on_table == None:
+                self.card_on_table = card
+            return card
         
         # Over the threshold we use the nn prediction
         else:
@@ -299,6 +299,8 @@ class Game_Train():
             for card in player['cards']:
                 if card.id == card_id:
                     player['cards'].remove(card)
+                    if not card_on_table:
+                        self.card_on_table = card
                     return card
 
 
@@ -353,9 +355,11 @@ class Game_Train():
         '''
         possible_action = []
 
-
         if card_on_table == None:
-            return self.max_min_values(player['cards'], maxx = False)
+            # I want to put the card with less points
+            c = self.max_min_values(player['cards'], maxx = False)
+            player['cards'].remove(c)
+            return c
         else:
             # The card on the table is a briscola
             if card_on_table.is_Briscola:
@@ -399,17 +403,14 @@ class Game_Train():
 
         #print('card2:', vars(card_2))
         #print('card1:', vars(card_1))
-
+        
         # Both players played a card with the same seed
         if card_1.seed == card_2.seed:
-            if card_1.value > card_2.value:
-            #if card_1.value >= card_2.value and card_1.numb > card_2.numb:
+            if card_1.value == card_2.value:
+                return 1 if card_1.numb > card_2.numb else 2
+            elif card_1.value > card_2.value:
                 self.player_1['points'] += points
                 return 1
-            elif card_1.value == card_2.value and card_1.numb > card_2.numb:
-                return 1
-            elif card_1.value == card_2.value and card_1.numb < card_2.numb:
-                return 2
             else:
                 self.player_2['points'] += points
                 return 2

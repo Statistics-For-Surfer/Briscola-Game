@@ -8,10 +8,10 @@ import numpy as np
 import Train as Briscola
 from tqdm import tqdm
 #import wandb
-BATCH_SIZE = 20
+BATCH_SIZE = 200
 GAMMA = 0.99
 LAMBDA = 0.0001 
-LR = 1e-1
+LR = 0.00001 
 TAU = 0.005
 device = "cpu"
 
@@ -146,6 +146,7 @@ class Brain:
         
         # Get the predictions of the nn
         next_Qs = self.predict(state, target).flatten()
+        #print(next_Qs)
         # Select the one that are actually valid
         next_Qs = next_Qs[valid_actions]
 
@@ -164,7 +165,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 100
+            num_episodes = 10000
 
         wins = []
         loss = []
@@ -178,8 +179,7 @@ class Brain:
                                 device=device).unsqueeze(0)
             for _ in range(20):
                 # Let the agent choose the action
-                action = self.env.get_action_train(state, self.env.player_1, 
-                                                self, self.env.card_on_table)
+                action = self.env.get_action_train(state, self.env.player_1, self)
                     #tensor_actions = torch.zeros(40, dtype=torch.int64)
                     #tensor_actions[action.id] = 1
                 tensor_actions = torch.full((1,1), action.id, device = device,
@@ -250,14 +250,16 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128, dtype=torch.float64)
         self.layer2 = nn.Linear(128, 128, dtype=torch.float64)
-        self.layer3 = nn.Linear(128, n_actions, dtype=torch.float64)
+        self.layer3 = nn.Linear(128, 128, dtype=torch.float64)
+        self.layer4 = nn.Linear(128, n_actions, dtype=torch.float64)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         x = F.relu(self.layer1(x)) 
         x = F.relu(self.layer2(x))
-        return self.layer3(x)
+        x = F.relu(self.layer3(x))
+        return F.softmax(self.layer4(x))
     
 
 

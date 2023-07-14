@@ -67,7 +67,7 @@ class Deck:
         '''
 
         # Possible attributes of the cards
-        seeds = [ 'Bastoni', 'Coppe', 'Denari', 'Spade']
+        seeds = ['Bastoni', 'Coppe', 'Denari', 'Spade']
         numbers = [i for i in range(1,11)]
         values = [11, 0, 10, 0, 0, 0, 0, 2, 3, 4]
         card_id = 0 
