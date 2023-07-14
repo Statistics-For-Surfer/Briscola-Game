@@ -65,6 +65,8 @@ class BriscolaApp(object):
 
 
     def get_random_logo(self):
+        '''Select random logo from all the images in the folder'''
+        
         random_logo = random.choice(os.listdir('Interface/images/logos'))
         self.logo = pygame.image.load(f"Interface/images/logos/{random_logo}")
         self.logo = pygame.transform.scale(self.logo, (self.WIDTH*0.2, self.HEIGHT*0.25))
