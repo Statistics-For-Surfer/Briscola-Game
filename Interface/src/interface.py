@@ -1,4 +1,5 @@
 import os
+import torch
 import random
 import pygame
 
@@ -60,7 +61,7 @@ class BriscolaApp(object):
         self.running = True
         self.active = False
         self.reactive = False
-        self.level = 0
+        self.level = 2
         self.get_random_logo()
 
 
@@ -75,7 +76,7 @@ class BriscolaApp(object):
     def clean_values(self):
         '''Clean saved values from previous game'''
 
-        self.len_virtual_deck = 33 # Start with 33
+        self.len_virtual_deck = 3 # Start with 33
         self.player_turn = bool(random.randint(0, 1))
         self.last_two_hand = False
         self.bot_points, self.player_points, self.points = 0, 0, 0
@@ -184,7 +185,7 @@ class BriscolaApp(object):
             self.rect_img_dict[str(pos)] = (img, card_id)
 
         # Bot cards
-        for pos in [self.bot_card_1_pos, self.bot_card_2_pos, self.bot_card_3_pos]:
+        for pos in self.bot_hand:
             self.screen.blit(self.card_backside, pos)
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
@@ -203,6 +204,58 @@ class BriscolaApp(object):
         self.update_cards_left()
         self.update_turn()
         self.update_score()
+
+        # Reinforced case.
+        if self.level == 3: 
+            self.initialize_cards_state()
+            self.model = torch.load('model.pt')
+
+
+    def initialize_cards_state(self):
+        '''Initialize cards state (all the cards are covered)'''
+
+        # All states are unknown (0).
+        self.cards_state = [0] * 40
+
+        # Set trump as the last card of the deck (3).
+        seed, card, _ = self.rect_img_dict[str(self.trump_pos)][1]
+        id = self.card_ids[f'{seed}_{card}']
+        self.cards_state[id-1] = 3
+
+
+    def update_cards_state(self):
+        '''Update the state of the cards from the BOT POINT OF VIEW as:
+            - 0, if the card is still in the deck or in the opponent's hand
+            - 1, if the card is in the hand of the bot
+            - 2, if the card is in the hand of the bot and is a briscola
+            - 3, the last card of the deck (known to the bot)
+            - 4, card played by the bot and the bot played first
+            - 5, card played by the bot and the bot played second
+            - 6, card played by the other player, and he played first
+            - 7, card played by the other player, and he played second
+            - 8, card already played
+        '''
+        trump = self.rect_img_dict[str(self.trump_pos)][1][0]
+
+        # Remove cards already seen.
+        for i, state in self.cards_state:
+            if state in [1, 2, 6]:
+                self.cards_state[i] = 8
+
+        # Update cards in bot_hand.
+        for card_pos in self.bot_hand:
+            seed, card, _ = self.rect_img_dict[str(card_pos)][1]
+            id = self.card_ids[f'{seed}_{card}']
+            if seed == trump:
+                self.cards_state[id-1] = 2
+            else:
+                self.cards_state[id-1] = 1
+
+        # Update card if player has a card on table.
+        if str(self.player_played_card_pos) in self.rect_img_dict.keys():
+            seed, card, _ = self.rect_img_dict[str(self.player_played_card_pos)][1]
+            id = self.card_ids[f'{seed}_{card}']
+            self.cards_state[id-1] = 6
 
 
     def select_card(self, pos):
@@ -227,13 +280,12 @@ class BriscolaApp(object):
         pygame.draw.rect(self.screen, self.table_color, pos)
 
 
-    def select_bot_card(self, i):
+    def select_bot_card(self):
         '''Card selected by the bot'''
 
         # Add pause to make the game more enjoyble.
-        pygame.time.wait(1000*i)
+        pygame.time.wait(1500)
 
-        # [INSERT BOT BRAIN]
         # Check if the game is arrived to last two hand to update bot_hand.
         if self.len_virtual_deck == 0:
             if not self.last_two_hand:
@@ -250,17 +302,15 @@ class BriscolaApp(object):
 
         # EASY LEVEL: random choice.
         if self.level == 1:
-            pos = random.choice(self.bot_hand)
+            pos = self.random_action()
 
         # INTERMEDIATE LEVEL: greedy choice.
         elif self.level == 2:
-            print('I still not have a greedy brain!!')
-            pos = random.choice(self.bot_hand)
+            pos = self.greedy_action()
 
         # HARD LEVEL: reinforced choice.
         elif self.level == 3:
-            print('I still not have a reinforced brain!!')
-            pos = random.choice(self.bot_hand)
+            pos = self.reinforced_action()
 
         img, card_id = self.rect_img_dict[str(pos)]
 
@@ -276,15 +326,111 @@ class BriscolaApp(object):
         pygame.draw.rect(self.screen, self.table_color, pos)
 
 
-    def img_card_match(self):
-        '''Map images and cards'''
+    def random_action(self):
+        '''Select random card from the hand'''
 
-        seeds = ['B', 'D', 'C', 'S']
+        return random.choice(self.bot_hand)
+
+
+    def greedy_action(self):
+        '''Select with a greedy criterion a card from the hand'''
+
+        possible_action = [None] * 3
+        cards = [self.rect_img_dict[str(pos)][1] for pos in self.bot_hand]
+        trump = self.rect_img_dict[str(self.trump_pos)][1][0]
+
+        if str(self.player_played_card_pos) not in self.rect_img_dict.keys():
+            i = self.max_min_values(cards, trump, maxx = False)
+            return self.bot_hand[i]
+        
+        else:
+            card_on_table = self.rect_img_dict[str(self.player_played_card_pos)][1]
+
+            # The card on the table is a briscola
+            if card_on_table[0] == trump:
+                # check if you have a briscola greater than the one on the table
+                for i, card in enumerate(cards):
+                    if (card[0] == trump and card[2] > card_on_table[2]):
+                        possible_action[i] = card
+            else:
+                for i, card in enumerate(cards):
+                    if ((card[0] == card_on_table[0] and card[2] > card_on_table[2]) or card[0]==trump):
+
+                        possible_action[i] = card
+        # I cannot take
+        if all(x is None for x in possible_action):
+            # I want to put the card with less points
+            i = self.max_min_values(cards, trump, maxx = False)
+            return self.bot_hand[i]
+        else:
+            # I want to put the card with more points
+            i = self.max_min_values(possible_action, trump, maxx = True)
+            return self.bot_hand[i]
+
+
+    def max_min_values(self, cards, trump, maxx=True):
+        '''Function that will return the card position with either the maximum 
+            of the minimum value out of the player current playable cards'''
+        
+        # Want to retrieve the max.
+        if maxx == True:
+            max_pos = None
+            max_value = float('-inf')
+
+            for i, card in enumerate(cards):
+                if card is not None and card[2] > max_value:
+                    max_value = card[2]
+                    max_pos = i
+
+            return max_pos
+        
+        # Want to retrieve the min.
+        else:
+            min_pos = None
+            min_value = float('inf')
+
+            for i, card in enumerate(cards):
+                if card[2] < min_value:
+                    min_value = card[2]
+                    min_pos = i
+                elif card[2] == min_value and not card[0] == trump:
+                    min_value = card[2]
+                    min_pos = i
+
+            return min_pos
+
+
+    def reinforced_action(self):
+        '''Select based on the NN a card from the hand'''
+
+        self.update_cards_state()
+        # [TODO insert connection to the model]
+
+
+        # Change state of selected card.
+        # self.cards_state[id-1] = 8
+
+        pass
+
+
+    def img_card_match(self):
+        '''Map images-cards and cards-ids'''
+
+        # Cards images.
+        seeds = ['B', 'C', 'D', 'S']
         cards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         values = [11, 0, 10, 0, 0, 0, 0, 2, 3, 4]
         for seed in seeds:
             for j, card in enumerate(cards):
                 self.img_card_dict[f'Interface/images/cards/{seed}_{card}.png'] = (seed, card, values[j])
+
+        # Cards ids.
+        self.card_ids = {}
+        i = 1
+        for seed in seeds:
+            for card in cards:
+                self.card_ids[f'{seed}_{card}'] = i
+                i += 1
 
 
     def load_card_img(self, path):
@@ -496,7 +642,7 @@ class BriscolaApp(object):
         self.last_two_hand = False
         self.bot_points, self.player_points, self.points = 0, 0, 0
         self.rect_img_dict, self.img_card_dict = {}, {}
-        self.level = 0
+        self.level = 2
         self.levels_interface()
 
 
@@ -514,13 +660,11 @@ class BriscolaApp(object):
                     self.running = False
                 elif self.event.type == pygame.MOUSEBUTTONDOWN and not self.active and not self.reactive:
                     if self.start_button.collidepoint(self.event.pos):
-                        if self.level == 0: self.level = 2
                         self.active = True
                         continue
 
                 elif self.event.type == pygame.MOUSEBUTTONDOWN and not self.active and self.reactive:
                     if self.restart_button.collidepoint(self.event.pos):
-                        if self.level == 0: self.level = 2
                         self.active = True
                         self.reactive = False
                         continue
@@ -564,19 +708,19 @@ class BriscolaApp(object):
                             if self.event.type == pygame.MOUSEBUTTONDOWN:
                                 if self.player_card_1_pos.collidepoint(self.event.pos) and str(self.player_card_1_pos) in self.rect_img_dict.keys():
                                     self.select_card(self.player_card_1_pos)
-                                    self.select_bot_card(2)
+                                    self.select_bot_card()
                                     
                                 elif self.player_card_2_pos.collidepoint(self.event.pos) and str(self.player_card_2_pos) in self.rect_img_dict.keys():
                                     self.select_card(self.player_card_2_pos)
-                                    self.select_bot_card(2)
+                                    self.select_bot_card()
 
                                 elif self.player_card_3_pos.collidepoint(self.event.pos) and str(self.player_card_3_pos) in self.rect_img_dict.keys():
                                     self.select_card(self.player_card_3_pos)
-                                    self.select_bot_card(2)
+                                    self.select_bot_card()
 
                         # If it's not player turn just get the bot's card an put it in the middle.
                         else:
-                            self.select_bot_card(1)
+                            self.select_bot_card()
 
                     # If bot has select its card check the decision of the player and put his card in the middle.
                     elif str(self.player_played_card_pos) not in self.rect_img_dict.keys():
