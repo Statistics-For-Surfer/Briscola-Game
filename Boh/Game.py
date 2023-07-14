@@ -248,7 +248,10 @@ class Game:
 
         # Both players played a card with the same seed
         if card_1.seed == card_2.seed:
-            if card_1.value >= card_2.value and card_1.numb > card_2.numb:
+            if card_1.value == card_2.value:
+                return 1 if card_1.numb > card_2.numb else 2
+            
+            elif card_1.value > card_2.value:
                 self.player_1.points += points
                 return 1
             else:
