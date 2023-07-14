@@ -4,9 +4,9 @@ import random
 import math
 
 steps_done = 0
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 1000
+EPS_START = 0.5
+EPS_END = 0.001
+EPS_DECAY = 100
 
 
 
@@ -208,8 +208,8 @@ class Game_Train():
 
         #print(hand_point_1 ,  hand_point_2)
 
-
-        return (self.get_state_for_player(1), hand_point_1 - hand_point_2, done)
+        #print(card.is_Briscola)
+        return (self.get_state_for_player(1), 100 * (hand_point_1 - hand_point_2) if card.is_Briscola == False else 20 * (hand_point_1 - hand_point_2)   , done)
 
     
 
