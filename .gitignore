@@ -2,3 +2,8 @@
 .Rhistory
 
 __pycache__/
+*.json
+*.log
+*.yaml
+*.txt
+*.wandb

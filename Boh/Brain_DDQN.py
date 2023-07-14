@@ -7,28 +7,29 @@ import random
 import numpy as np
 import Train as Briscola
 from tqdm import tqdm
-#import wandb
-BATCH_SIZE = 200
+import wandb
+BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.0001 
 LR = 0.00001 
 TAU = 0.005
 device = "cpu"
 
-#wandb.login()
+wandb.login()
 # start a new wandb run to track this script
-#wandb.init(
-#  set the wandb project where this run will be logged
-#    project="briscola_game",
-    
+wandb.init(
+  #set the wandb project where this run will be logged
+    project="briscola_game",
     # track hyperparameters and run metadata
-#    config={
-#    "learning_rate": 0.02,
-#    "architecture": "QNN",
-#    "dataset": "NO",
-#    "epochs": 100,
-#    }
-#)
+    config={
+    "Value Function": 0,
+    "learning_rate": 0.00001 ,
+    "reward": 0, 
+    "architecture": "QNN",
+    "dataset": "NO",
+    "epochs": 100,
+    }
+)
 
 # TODO capire come fare il training e salvare il modello 
 # 
@@ -120,7 +121,7 @@ class Brain:
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.model.parameters(), 100)
         self.optimizer.step()
-        #wandb.log({"loss": loss})
+        wandb.log({"loss": loss , "reward": reward_batch})
         return loss
 
 
@@ -165,7 +166,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 10000
+            num_episodes = 1000
 
         wins = []
         loss = []
@@ -259,6 +260,7 @@ class DQN(nn.Module):
         x = F.relu(self.layer1(x)) 
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
+        #print(F.softmax(self.layer4(x)))
         return F.softmax(self.layer4(x))
     
 
