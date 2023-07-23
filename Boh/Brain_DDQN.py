@@ -173,7 +173,11 @@ class Brain:
         for i_episode in tqdm(range(num_episodes)):
             # Initialize the environment and get it's state
             self.env.reset()
-            self.env.first_to_play = 1
+            self.env.first_to_play = random.randint(1,2) + 1
+
+            if self.env.first_to_play == 2:
+                self.env.first_hand()
+
             state = self.env.get_state_for_player(1)
             state = torch.tensor(state, dtype=torch.float64, 
                                 device=device).unsqueeze(0)

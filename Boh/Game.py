@@ -19,7 +19,7 @@ class Game:
         self.player_1.state = self.get_state_for_player(1)
         self.player_2.state = self.get_state_for_player(2)
         
-        self.first_to_play = np.random.randint(3)
+        self.first_to_play = np.random.randint(2) + 1
         self.card_on_table = None
 
     def reset(self):

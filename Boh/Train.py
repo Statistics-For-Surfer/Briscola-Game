@@ -4,7 +4,7 @@ import random
 import math
 
 steps_done = 0
-EPS_START = 0.69
+EPS_START = 1
 EPS_END = 0.001
 EPS_DECAY = 100
 
@@ -135,6 +135,17 @@ class Game_Train():
 
     # ------------------- Q LEARN FUNCTIONS -------------------
 
+    def first_hand(self):
+        '''
+        Function to use in case the first to play is not the Q agent
+        '''
+
+        state = self.get_state_for_player(2)
+        card = self.get_action_train(state, self.player_2)
+        self.update_state_after_play(card, 2, True)
+
+
+
     def step(self, card):
         '''
         Function that finds the new  
@@ -153,9 +164,15 @@ class Game_Train():
         done = self.finish_step(winner)
 
         if done:
-            return (self.get_state_for_player(1), 1 if (self.player_1['points'] - self.player_2['points'])>0 else 0, done)
+            if (self.player_1['points'] - self.player_2['points'])>0:
+                reward = 1
+            elif (self.player_1['points'] - self.player_2['points']) == 0:
+                reward = 0
+            else:
+                reward = 0.2
+            return (self.get_state_for_player(1), reward, done)
         
-        hand_point_1 = init_score_1 - self.player_1['points']
+        hand_point_1 = self.player_1['points'] - init_score_1
         #hand_point_2 = init_score_2 - self.player_2['points']
         #writer.add_histogram('Player1Hand', np.array(self.player_1['cards']), steps_done)
 
@@ -236,9 +253,8 @@ class Game_Train():
         global steps_done
 
         # Find the new threshold that changes with the number of steps
-        #eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-                        #math.exp(-1. * steps_done / EPS_DECAY)
-        eps_threshold = .30
+        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+                        math.exp(-1. * steps_done / EPS_DECAY)
         steps_done += 1
 
 
