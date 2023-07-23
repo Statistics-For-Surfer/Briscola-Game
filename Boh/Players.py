@@ -20,7 +20,7 @@ class Player:
         self.state = None
 
         if policy == 'Q_learning':
-            self.brain = Brain(40, 40)
+            self.brain = Brain(162, 40)
 
 
     def get_action(self, state, card_on_table = None):
@@ -140,7 +140,7 @@ class Player:
         2. Using the nn predicton (exploitation) otherwise.
         '''
 
-        card_id = self.brain.predict_next_action(torch.tensor([state], 
+        card_id = self.brain.predict_next_action(torch.tensor([state], device='cpu',  
                                                 dtype=torch.float64))
         for card in self.cards:
             if card.id == card_id:

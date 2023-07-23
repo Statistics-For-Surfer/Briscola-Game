@@ -19,7 +19,7 @@ class Game_Train():
         self.player_1 = {'cards': self.deck.draw_first_hand(), 
                         'policy': 'Q_learning', 'points': 0}
         self.player_2 = {'cards': self.deck.draw_first_hand(), 
-                        'policy': 'Greedy', 'points': 0}
+                        'policy': 'Random', 'points': 0}
 
         self.state = self.initial_state(self.player_1['cards'], 
                                         self.player_2['cards'], 
@@ -60,7 +60,6 @@ class Game_Train():
         state = np.zeros(162)
 
         for card in cards_1:
-            print(card.id)
             state[int(card.id) + 40] = 1
 
         
@@ -154,18 +153,16 @@ class Game_Train():
         done = self.finish_step(winner)
 
         if done:
-            return (self.get_state_for_player(1), 
-                (self.player_1['points'] - self.player_2['points'])*2, done)
+            return (self.get_state_for_player(1), 1 if (self.player_1['points'] - self.player_2['points'])>0 else 0, done)
         
         hand_point_1 = init_score_1 - self.player_1['points']
-        hand_point_2 = init_score_2 - self.player_2['points']
-
+        #hand_point_2 = init_score_2 - self.player_2['points']
         #writer.add_histogram('Player1Hand', np.array(self.player_1['cards']), steps_done)
 
         #print(hand_point_1 ,  hand_point_2)
 
         #print(card.is_Briscola)
-        return (self.get_state_for_player(1), 100 * (hand_point_1 - hand_point_2) if card.is_Briscola == False else 5 * (hand_point_1 - hand_point_2), done)
+        return (self.get_state_for_player(1), hand_point_1/22, done)
 
     
 
@@ -179,7 +176,7 @@ class Game_Train():
             # Let player 2 play it's card
             state = self.get_state_for_player(2)
             card = self.get_action_train(state, self.player_2)
-            self.update_state_after_play(card, 9)
+            self.update_state_after_play(card, 2)
             # Fine the new winner
             winner = self.find_hand_winner(self.card_on_table[0], card, 1)
             self.first_to_play = winner
@@ -209,7 +206,7 @@ class Game_Train():
         if self.first_to_play == 2:
             state = self.get_state_for_player(2)
             card = self.get_action_train(state, self.player_2)
-            self.update_state_after_play(card, 8, True)
+            self.update_state_after_play(card, 2, True)
 
         return False
     
@@ -217,10 +214,13 @@ class Game_Train():
     # -------------------- GET ACTION FUNCTION --------------------
 
     def get_action_train(self, state, player, brain = None):
+        lambda_ = 0.7 
+
         if player['policy'] == 'Random':
-            return self.random_action(player)
-        elif player['policy'] == 'Greedy':
-            return self.greedy_action(player, self.card_on_table)
+            if random.random() > lambda_:
+                return self.random_action(player)
+            else:
+                return self.greedy_action(player, self.card_on_table)
         else: 
             return self.Q_action(state, player, brain, self.card_on_table)
             
@@ -247,20 +247,16 @@ class Game_Train():
             card = self.random_action(player)
             if card_on_table == None:
                 self.card_on_table = card
-            print(card)
             return card
         
         # Over the threshold we use the nn prediction
         else:
             card_id = brain.predict_next_action(state)
-            print(card_id)
             for card in player['cards']:
                 if card.id == card_id:
                     player['cards'].remove(card)
                     if not card_on_table:
                         self.card_on_table = card
-                    
-                    print(card_id, card.id)
                     return card
 
 
@@ -361,7 +357,7 @@ class Game_Train():
         '''
         points = card_2.value + card_1.value
 
-        #print('card2:', vars(card_2))
+        #('card2:', vars(card_2))
         #print('card1:', vars(card_1))
         
         # Both players played a card with the same seed

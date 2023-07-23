@@ -57,7 +57,7 @@ class Deck:
 
     def __init__(self):# rand = True):
         self.deck = self.create_deck()
-        random.seed(random.randint(1, 1))
+        random.seed(random.randint(1, 10))
         random.shuffle(self.deck)
         random.seed()
         self.briscola = self.get_briscola()

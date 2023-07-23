@@ -13,8 +13,7 @@ GAMMA = 0.99
 LAMBDA = 0.001 
 LR = 0.001 
 TAU = 0.005
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = 'cpu'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 wandb.login()
 # start a new wandb run to track this script
 wandb.init(
@@ -66,7 +65,7 @@ class Brain:
             self.memory = ReplayMemory(10000)
             self.env = Briscola.Game_Train()
         else:
-            self.model = torch.load('model.pt')
+            self.model = torch.load('model.pt').cpu()
 
 
         # TODO come fare quando abbiamo già il modello?
@@ -86,10 +85,10 @@ class Brain:
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
                             batch.next_state)), device=device, dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in batch.next_state
-                                                    if s is not None])
-        state_batch = torch.cat(batch.state)
-        action_batch = torch.cat(batch.action)
-        reward_batch = torch.cat(batch.reward)
+                                                    if s is not None]).to(device)
+        state_batch = torch.cat(batch.state).to(device)
+        action_batch = torch.cat(batch.action).to(device)
+        reward_batch = torch.cat(batch.reward).to(device)
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
@@ -102,8 +101,11 @@ class Brain:
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
         next_state_values = torch.zeros(BATCH_SIZE, device=device, dtype= torch.float64)
+        #print(non_final_next_states.eq(1).shape)
+        #print(self.model_(non_final_next_states).shape)
         with torch.no_grad():
-            next_state_values[non_final_mask] = (non_final_next_states.eq(1)*self.model_(non_final_next_states)).max(1)[0]
+            next_state_values[non_final_mask] = self.model_(non_final_next_states).max(1)[0]
+            #(non_final_next_states.eq(1)*self.model_(non_final_next_states)).max(1)[0]
         
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * GAMMA) + reward_batch
@@ -150,8 +152,7 @@ class Brain:
 
         # The best valid action
         idx = torch.argmax(next_Qs)
-        
-        print(next_Qs, idx)
+    
         if target:
             return next_Qs[idx]
     
@@ -178,8 +179,6 @@ class Brain:
                                 device=device).unsqueeze(0)
             for _ in range(20):
                 # Let the agent choose the action
-                state = torch.tensor(self.env.get_state_for_player(1), 
-                                dtype=torch.float64, device=device).unsqueeze(0)
                 action = self.env.get_action_train(state, self.env.player_1, self)
                     #tensor_actions = torch.zeros(40, dtype=torch.int64)
                     #tensor_actions[action.id] = 1
@@ -189,7 +188,7 @@ class Brain:
                 # Perform the action and see where it will lead to
                 observation, reward, done = self.env.step(action)
                 reward = torch.tensor([reward], device=device, dtype=torch.int64)
-                
+                #print(observation)
                 if done:
                     next_state = None
                 else:
@@ -218,7 +217,7 @@ class Brain:
                 if done:
                     break
                 
-            wins.append(np.sign(reward[0]) if reward[0] else 0)
+            wins.append(np.sign(reward[0].cpu()) if reward[0] else 0)
         torch.save(self.model, 'model.pt')
         return wins, loss
     
@@ -247,12 +246,12 @@ class ReplayMemory(object):
 
 class DQN(nn.Module):
 
-    def __init__(self, n_observations, n_actions):
+    def __init__(self, n_observations, n_actions, hidden = 256):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 128, dtype=torch.float64)
-        self.layer2 = nn.Linear(128, 128, dtype=torch.float64)
-        self.layer3 = nn.Linear(128, 128, dtype=torch.float64)
-        self.layer4 = nn.Linear(128, n_actions, dtype=torch.float64)
+        self.layer1 = nn.Linear(n_observations, hidden, dtype=torch.float64)
+        self.layer2 = nn.Linear(hidden, hidden, dtype=torch.float64)
+        self.layer3 = nn.Linear(hidden, hidden, dtype=torch.float64)
+        self.layer4 = nn.Linear(hidden, n_actions, dtype=torch.float64)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
