@@ -7,3 +7,6 @@ __pycache__/
 *.yaml
 *.txt
 *.wandb
+Boh/wandb/debug-internal.log
+Boh/wandb/debug.log
+*.log

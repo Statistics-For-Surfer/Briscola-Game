@@ -4,8 +4,8 @@ import random
 import math
 
 steps_done = 0
-EPS_START = 1
-EPS_END = 0.001
+EPS_START = .82
+EPS_END = 0.01
 EPS_DECAY = 100
 
 

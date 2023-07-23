@@ -22,7 +22,7 @@ wandb.init(
     # track hyperparameters and run metadata
     config={
     "Value Function": 0,
-    "learning_rate": 0.00001 ,
+    "learning_rate": 0.01 ,
     "reward": 0, 
     "architecture": "QNN",
     "dataset": "NO",
@@ -165,7 +165,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 1000
+            num_episodes = 20000
 
         wins = []
         loss = []
