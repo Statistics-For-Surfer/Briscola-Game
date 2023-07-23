@@ -126,6 +126,17 @@ class Game:
                     # hand are skipped 
                     player_state.append(state - 2)
 
+        for i, state in enumerate(player_state):
+            if state == 0:
+                player_state[i] = -100
+            elif state == 3:
+                player_state[i] = -200
+            elif state == 6:
+                player_state[i] = -300
+            elif state == 8:
+                player_state[i] = -400
+                
+
         return player_state
     
     # -------------------- STATE UPDATE FUNCTIONS --------------------

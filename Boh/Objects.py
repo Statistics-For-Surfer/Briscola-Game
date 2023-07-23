@@ -55,9 +55,11 @@ class Deck:
     composed of 40 cards.
     '''
 
-    def __init__(self):
+    def __init__(self):# rand = True):
         self.deck = self.create_deck()
+        random.seed(random.randint(1, 1))
         random.shuffle(self.deck)
+        random.seed()
         self.briscola = self.get_briscola()
         self.all_cards = self.set_briscola()
 

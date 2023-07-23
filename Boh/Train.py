@@ -40,7 +40,7 @@ class Game_Train():
         self.player_1 = {'cards': self.deck.draw_first_hand(), 
                         'policy': 'Q_learning', 'points': 0}
         self.player_2 = {'cards': self.deck.draw_first_hand(), 
-                        'policy': 'Greedy', 'points': 0}
+                        'policy': 'Random', 'points': 0}
 
         self.state = self.initial_state(self.player_1['cards'], 
                                         self.player_2['cards'], 
@@ -56,102 +56,57 @@ class Game_Train():
 # -------------------- STATE FUNCTIONS --------------------
 
     def initial_state(self, cards_1, cards_2, briscola):
-        '''
-        Define the initial state of the game, right after the first 
-        cards are given to the players.
 
-        In general the states will be:
-        - 0, card still in the deck.
-        - 1, card in the hand of the player 1.
-        - 2, card in the hand of the player 1 and is a briscola.
-        - 3, card in the hand of the player 2.
-        - 4, card in the hand of the player 2 and is a briscola.
-        - 5, the last card of the deck (known to the players).
-        - 6, card played by player 1 and player 1 played first.
-        - 7, card played by player 1 and player 1 played second.
-        - 8, card played by player 2 and player 2 played first.
-        - 9, card played by player 2 and player 2 played second.
-        - 10, card already played.
-        '''
-        state = np.zeros(40)
-        
+        state = np.zeros(162)
+
         for card in cards_1:
-            state[card.id] = 1
-            if card.is_Briscola: state[card.id] = 2
+            print(card.id)
+            state[int(card.id) + 40] = 1
 
+        
         for card in cards_2:
-            state[card.id] = 3
-            if card.is_Briscola: state[card.id] = 4
+            state[card.id + 40] = 2
 
-        state[briscola.id] = 5
-
+        state[briscola.id + 80] = 1
+        
         return state
-
+    
     def get_state_for_player(self, player):
-        '''
-        Function that will give back the player's informations.
-        So no info about the cards in the hand of the opposing player.
-
-        For each player the state will be:
-        - 0, if the card is still in the deck in the opponent's hand.
-        - 1, if the card is in the hand of the player
-        - 2, if the card is in the hand of the player and is a briscola
-        - 3, the last card of the deck (known to the players).
-        - 4, card played by the player and the player played first.
-        - 5, card played by the player and the player played second.
-        - 6, card played by the other player, and they played first.
-        - 7, card played by the other player, and they played second.
-        - 8, card already played.
-        '''
-        player_state = []
 
         if player == 1:
-            # The state the player can be aware of
-            known_states = [i for i in range(11) if i not in [3,4]]
-            for state in self.state:
-                # If the player can't know this state, set it to 0
-                if state not in known_states:
-                    player_state.append(0)
-                elif state > 2: 
-                    # Take 2 out since the states regarding player 2 
-                    # hand are skipped 
-                    player_state.append(state - 2)
-                else:
-                    player_state.append(state)
+            idx = np.where(self.state[40:80] == 2)[0]
+            player_state = np.copy(self.state)
+            player_state[40 + idx] = 0
+            player_state[160] = self.player_1['points']
+            player_state[161] = self.player_2['points']
+            return player_state
+        else:
+            idx_1 = np.where(self.state[40:80] == 1)[0]
+            idx_2 = np.where(self.state[40:80] == 2)[0]
+            player_state = np.copy(self.state)
+            player_state[40 + idx_1] = 0
+            player_state[40 + idx_2] = 1
+            player_state[160] = self.player_2['points']
+            player_state[161] = self.player_1['points']
+            return player_state
 
-        else: 
-            # The state the player can be aware of
-            known_states = [i for i in range(11) if i not in [0,1,2]]
-            for state in self.state:
-                # If the player can't know this state, set it to 0
-                if state not in known_states:
-                    player_state.append(0)
-                elif state in [6, 7]:
-                    player_state.append(state)
-                elif state in [8, 9]:
-                    player_state.append(state - 4)
-                else:
-                    # Take 2 out since the states regarding player 1 
-                    # hand are skipped 
-                    player_state.append(state - 2)
 
-        return player_state
-    
     # -------------------- STATE UPDATE FUNCTIONS --------------------
 
-    def update_state_after_play(self, card, new_state, on_table = False):
+    def update_state_after_play(self, card, player, on_table = False):
             '''
             Function that update the state after a card is played, 
             in case it's the first card to be played set it as on table.
             '''
-            self.state[card.id] = new_state
+            self.state[card.id + 40] = player
+            self.state[card.id + 120] = 1
+
             if on_table == True:
                 self.card_on_table = card
 
             else:
                 on_table = self.card_on_table
                 self.card_on_table = [on_table, card]
-
 
     def update_state_after_hand(self):
             '''
@@ -161,10 +116,12 @@ class Game_Train():
             The card on table will be set to None 
             '''
 
-            # Set the state of the cards played during the hand to 10 
-            for card in self.card_on_table:
-                self.state[card.id] = 10
-            
+            idx = np.where(self.state[120:160] == 1)[0]
+
+            self.state[idx] = 1
+            self.state[40 + idx] = 0
+            self.state[120 + idx] = 0
+
             # Reset the card on table
             self.card_on_table = None
 
@@ -173,9 +130,8 @@ class Game_Train():
             Function that update the state of the cards after the cards
             are drawn. 
             '''
-
-            self.state[card_1.id] = 2 if card_1.is_Briscola else 1
-            self.state[card_2.id] = 4 if card_2.is_Briscola else 3
+            self.state[card_1.id + 40] = 1 
+            self.state[card_2.id + 40] = 2 
 
 
     # ------------------- Q LEARN FUNCTIONS -------------------
@@ -189,9 +145,9 @@ class Game_Train():
 
         winner = None
         if self.first_to_play == 1:
-            self.update_state_after_play(card, 6, True)
+            self.update_state_after_play(card, 1, True)
         else:
-            self.update_state_after_play(card, 7)
+            self.update_state_after_play(card, 1)
             winner = self.find_hand_winner(card, self.card_on_table[0], 2)
             self.first_to_play = winner
 
@@ -209,7 +165,7 @@ class Game_Train():
         #print(hand_point_1 ,  hand_point_2)
 
         #print(card.is_Briscola)
-        return (self.get_state_for_player(1), 100 * (hand_point_1 - hand_point_2) if card.is_Briscola == False else 5 * (hand_point_1 - hand_point_2)   , done)
+        return (self.get_state_for_player(1), 100 * (hand_point_1 - hand_point_2) if card.is_Briscola == False else 5 * (hand_point_1 - hand_point_2), done)
 
     
 
@@ -291,16 +247,20 @@ class Game_Train():
             card = self.random_action(player)
             if card_on_table == None:
                 self.card_on_table = card
+            print(card)
             return card
         
         # Over the threshold we use the nn prediction
         else:
             card_id = brain.predict_next_action(state)
+            print(card_id)
             for card in player['cards']:
                 if card.id == card_id:
                     player['cards'].remove(card)
                     if not card_on_table:
                         self.card_on_table = card
+                    
+                    print(card_id, card.id)
                     return card
 
 

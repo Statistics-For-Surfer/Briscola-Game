@@ -8,17 +8,17 @@ import numpy as np
 import Train as Briscola
 from tqdm import tqdm
 import wandb
-BATCH_SIZE = 200
+BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.001 
 LR = 0.001 
 TAU = 0.005
-device = "cpu"
-
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'cpu'
 wandb.login()
 # start a new wandb run to track this script
 wandb.init(
-  #set the wandb project where this run will be logged
+    #set the wandb project where this run will be logged
     project="briscola_game",
     # track hyperparameters and run metadata
     config={
@@ -41,16 +41,13 @@ def find_all_valid_actions(states):
         Function that given the player's state give back the cards that
         the player is allowed to play.
         '''
+        valid = np.ones(40)
 
-        valid = []
+        for i, state in enumerate(states[0][40:80]):
+            if state:
+                valid[i] = 0
 
-        for i, state in enumerate(states[0]):
-            # State 1 and 2 are the ones corresponding to card in the 
-            # hand of the player. 1 not briscola, 2 briscola
-            if int(state) in [1,2]:
-                valid.append(i)
-            
-        return valid
+        return np.where(valid == 1)[0]
 
 
 class Brain:
@@ -149,15 +146,16 @@ class Brain:
         next_Qs = self.predict(state, target).flatten()
         #print(next_Qs)
         # Select the one that are actually valid
-        next_Qs = next_Qs[valid_actions]
+        next_Qs[valid_actions] = -1e8
 
         # The best valid action
         idx = torch.argmax(next_Qs)
         
+        print(next_Qs, idx)
         if target:
             return next_Qs[idx]
-        
-        return valid_actions[idx]
+    
+        return idx
 
 
     
@@ -166,7 +164,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 1000000
+            num_episodes = 1000
 
         wins = []
         loss = []
@@ -180,6 +178,8 @@ class Brain:
                                 device=device).unsqueeze(0)
             for _ in range(20):
                 # Let the agent choose the action
+                state = torch.tensor(self.env.get_state_for_player(1), 
+                                dtype=torch.float64, device=device).unsqueeze(0)
                 action = self.env.get_action_train(state, self.env.player_1, self)
                     #tensor_actions = torch.zeros(40, dtype=torch.int64)
                     #tensor_actions[action.id] = 1
