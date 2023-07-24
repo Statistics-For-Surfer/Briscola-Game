@@ -1,7 +1,8 @@
-import os
 import torch
 import random
 import pygame
+import numpy as np
+from train.Brain_DDQN import DQN
 
 
 
@@ -86,10 +87,14 @@ class BriscolaApp(object):
         if self.level == 3:
             if self.player_turn and points >= 10:
                 self.small_logo = pygame.image.load("Interface/images/logos/hard_negative.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
             elif not self.player_turn and points >= 10:
                 self.small_logo = pygame.image.load("Interface/images/logos/hard_positive.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
             else: 
                 self.small_logo = pygame.image.load("Interface/images/logos/hard_neutral.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+
 
         elif self.level == 2:
             if self.player_turn and points >= 10:
@@ -127,7 +132,9 @@ class BriscolaApp(object):
         self.rect_img_dict, self.img_card_dict = {}, {}
         self.img_card_match()
         self.virtual_deck = list(self.img_card_dict.items())
+        random.seed(random.randint(1, 10))
         random.shuffle(self.virtual_deck)
+        random.seed()
         self.over = False
         self.last_hand = False
 
@@ -213,7 +220,7 @@ class BriscolaApp(object):
         # ADD CARD IMAGES
         
         # Trump
-        path, card_id = self.virtual_deck.pop(0)
+        path, card_id = self.virtual_deck.pop(6)
         img = pygame.transform.rotate(self.load_card_img(path), 90)
         self.rect_img_dict[str(self.trump_pos)] = (img, card_id)
         self.screen.blit(img, self.trump_pos)
@@ -226,7 +233,8 @@ class BriscolaApp(object):
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
             self.screen.blit(img, pos)
-            self.rect_img_dict[str(pos)] = (img, card_id)
+            # [Show bots cards]
+            # self.rect_img_dict[str(pos)] = (img, card_id)
 
         # Bot cards
         for pos in self.bot_hand:
@@ -234,6 +242,8 @@ class BriscolaApp(object):
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
             self.rect_img_dict[str(pos)] = (img, card_id)
+            self.screen.blit(img, pos)
+
 
         # Change level
         pygame.draw.rect(self.screen, self.table_color, [self.WIDTH-self.w*0.55, self.h*0.35, self.w/2, self.h/2], 0, self.card_smoothing)
@@ -251,54 +261,32 @@ class BriscolaApp(object):
         # Reinforced case.
         if self.level == 3: 
             self.initialize_cards_state()
-            self.model = torch.load('model.pt')
+            self.model = DQN(162, 40)
+            self.model.load_state_dict(torch.load('train/model_weights.pth'))
+
+
+    def get_card_id(self, pos):
+        '''Get card id from its position'''
+
+        seed, card, _ = self.rect_img_dict[str(pos)][1]
+        id = self.card_ids[f'{seed}_{card}']
+        return id
 
 
     def initialize_cards_state(self):
         '''Initialize cards state (all the cards are covered)'''
 
-        # All states are unknown (0).
-        self.cards_state = [0] * 40
+        # All states are empty.
+        self.cards_state = [0] * 162
 
-        # Set trump as the last card of the deck (3).
-        seed, card, _ = self.rect_img_dict[str(self.trump_pos)][1]
-        id = self.card_ids[f'{seed}_{card}']
-        self.cards_state[id-1] = 3
+        # Set trump on the initial state.
+        id = self.get_card_id(self.trump_pos)
+        self.cards_state[80 + id] = 1
 
-
-    def update_cards_state(self):
-        '''Update the state of the cards from the BOT POINT OF VIEW as:
-            - 0, if the card is still in the deck or in the opponent's hand
-            - 1, if the card is in the hand of the bot
-            - 2, if the card is in the hand of the bot and is a briscola
-            - 3, the last card of the deck (known to the bot)
-            - 4, card played by the bot and the bot played first
-            - 5, card played by the bot and the bot played second
-            - 6, card played by the other player, and he played first
-            - 7, card played by the other player, and he played second
-            - 8, card already played
-        '''
-        trump = self.rect_img_dict[str(self.trump_pos)][1][0]
-
-        # Remove cards already seen.
-        for i, state in self.cards_state:
-            if state in [1, 2, 6]:
-                self.cards_state[i] = 8
-
-        # Update cards in bot_hand.
-        for card_pos in self.bot_hand:
-            seed, card, _ = self.rect_img_dict[str(card_pos)][1]
-            id = self.card_ids[f'{seed}_{card}']
-            if seed == trump:
-                self.cards_state[id-1] = 2
-            else:
-                self.cards_state[id-1] = 1
-
-        # Update card if player has a card on table.
-        if str(self.player_played_card_pos) in self.rect_img_dict.keys():
-            seed, card, _ = self.rect_img_dict[str(self.player_played_card_pos)][1]
-            id = self.card_ids[f'{seed}_{card}']
-            self.cards_state[id-1] = 6
+        # Set initial state of player's cards.
+        for pos in self.bot_hand:
+            id = self.get_card_id(pos)
+            self.cards_state[40 + id] = 1
 
 
     def select_card(self, pos):
@@ -328,6 +316,11 @@ class BriscolaApp(object):
 
         # Add pause to make the game more enjoyble.
         pygame.time.wait(1500)
+
+        # Check if is player turn and update state for card on table.
+        if self.player_turn and self.level == 3:
+            id = self.get_card_id(self.player_played_card_pos)
+            self.cards_state[120 + id] = 1
 
         # Check if the game is arrived to last two hand to update bot_hand.
         if self.len_virtual_deck == 0:
@@ -446,14 +439,17 @@ class BriscolaApp(object):
     def reinforced_action(self):
         '''Select based on the NN a card from the hand'''
 
-        self.update_cards_state()
-        # [TODO insert connection to the model]
+        out = self.model.forward(torch.tensor(self.cards_state, dtype=torch.float64)).tolist()
+        valid_action = self.cards_state[40:80]
+        for i, val in enumerate(valid_action):
+            if val == 0:
+                out[i] = -1e8
+        idx = np.argmax(out)
 
-
-        # Change state of selected card.
-        # self.cards_state[id-1] = 8
-
-        pass
+        for pos in self.bot_hand:
+            id = self.get_card_id(pos)
+            if id == idx:
+                return pos
 
 
     def img_card_match(self):
@@ -469,7 +465,7 @@ class BriscolaApp(object):
 
         # Cards ids.
         self.card_ids = {}
-        i = 1
+        i = 0
         for seed in seeds:
             for card in cards:
                 self.card_ids[f'{seed}_{card}'] = i
@@ -497,6 +493,21 @@ class BriscolaApp(object):
         player_card = self.rect_img_dict[str(self.player_played_card_pos)][1]
         bot_card = self.rect_img_dict[str(self.bot_played_card_pos)][1]
         trump = self.rect_img_dict[str(self.trump_pos)][1][0]
+
+        if self.level == 3:
+            # Remove cards on table.
+            if self.player_turn:
+                id = self.get_card_id(self.player_played_card_pos)
+                self.cards_state[120 + id] = 0
+
+            # Remove card from bot's hand.
+            id = self.get_card_id(self.bot_played_card_pos)
+            self.cards_state[40 + id] = 0
+            self.cards_state[id] = 1
+
+            id = self.get_card_id(self.player_played_card_pos)
+            self.cards_state[id] = 1
+
 
         # Remove mapping of both card in the middle and cover them.
         del self.rect_img_dict[str(self.player_played_card_pos)]
@@ -530,6 +541,11 @@ class BriscolaApp(object):
                     self.points = points
                     self.bot_points += self.points
 
+        if self.level == 3:
+            # Add points to the state.
+            self.cards_state[160] = self.bot_points
+            self.cards_state[161] = self.player_points
+
         # Condition to close the game.
         if sum([True for x in [self.player_card_1_pos, self.player_card_2_pos, self.player_card_3_pos] if str(x) in self.rect_img_dict.keys()]) == 0:
             self.last_hand = True
@@ -550,6 +566,8 @@ class BriscolaApp(object):
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
             self.rect_img_dict[str(self.bot_free_position)] = (img, card_id)
+            # [Show bot cards]
+            # self.screen.blit(img, self.bot_free_position)
 
             # Remove the two cards from the deck.
             self.len_virtual_deck -= 2
@@ -591,6 +609,11 @@ class BriscolaApp(object):
                 img = pygame.transform.rotate(img, 270)
                 self.screen.blit(img, self.player_free_position)
                 self.rect_img_dict[str(self.player_free_position)] = (img, card_id)  
+
+        # Add new bot's card state.
+        if self.level == 3:
+            id = self.get_card_id(self.bot_free_position)
+            self.cards_state[40 + id] = 1
 
         # Labels updating.
         self.update_cards_left()

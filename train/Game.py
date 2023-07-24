@@ -1,5 +1,5 @@
-from .Objects import Deck
-from .Players import Player
+from train.Objects import Deck
+from train.Players import Player
 import numpy as np
 
 # --------------------------- GAME CLASS ---------------------------
