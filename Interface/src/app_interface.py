@@ -33,6 +33,7 @@ class BriscolaApp(object):
         self.running = True
         self.active = False
         self.reactive = False
+        self.over = False
         self.level = 2
         self.get_logo()
 
@@ -302,9 +303,13 @@ class BriscolaApp(object):
             else:
                 self.bot_hand = [x for x in self.bot_hand if x != self.bot_free_position]
 
+        
         # Condition for game over.
         if len(self.bot_hand) == 1:
             self.over = True
+
+        if len(self.bot_hand) == 0:
+            return
  
         # Remove previous position.
         pos = None
@@ -545,6 +550,11 @@ class BriscolaApp(object):
             # Remove the two cards from the deck.
             self.len_virtual_deck -= 2
 
+            # Add new bot's card state.
+            if self.level == 3:
+                id = self.get_card_id(self.bot_free_position)
+                self.cards_state[40 + id] = 1
+
         # If there is one reamining card in the deck and the trump.
         elif self.len_virtual_deck == 1:
 
@@ -583,10 +593,11 @@ class BriscolaApp(object):
                 self.screen.blit(img, self.player_free_position)
                 self.rect_img_dict[str(self.player_free_position)] = (img, card_id)  
 
-        # Add new bot's card state.
-        if self.level == 3:
-            id = self.get_card_id(self.bot_free_position)
-            self.cards_state[40 + id] = 1
+            # Add new bot's card state.
+            if self.level == 3:
+                id = self.get_card_id(self.bot_free_position)
+                self.cards_state[40 + id] = 1
+
 
         # Labels updating.
         self.update_cards_left()
@@ -698,6 +709,11 @@ class BriscolaApp(object):
             # Select bot card without any event.
             if self.active and str(self.bot_played_card_pos) not in self.rect_img_dict.keys() and not self.player_turn:
                 self.select_bot_card()
+
+            if self.over and self.last_hand and self.active:
+                self.game_over()
+                self.active, self.reactive = False, True
+                continue
             
             for self.event in pygame.event.get():
                 if self.event.type == pygame.QUIT:
@@ -739,10 +755,10 @@ class BriscolaApp(object):
                             continue
 
                     # Check if the game match is over and possibly start another one.
-                    if self.over and self.last_hand:
-                        self.game_over()
-                        self.active, self.reactive = False, True
-                        continue
+                    # if self.over and self.last_hand:
+                    #     self.game_over()
+                    #     self.active, self.reactive = False, True
+                    #     continue
 
 
                     # Bot still don't select card => player still don't select card.
