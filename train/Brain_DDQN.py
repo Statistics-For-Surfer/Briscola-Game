@@ -35,6 +35,21 @@ wandb.init(
 )
 
 
+def find_all_valid_actions(states):
+    '''
+    Function that given the player's state give back the cards that
+    the player is allowed to play.
+    '''
+    valid = np.ones(40)
+
+    for i, state in enumerate(states[0][40:80]):
+        if state:
+            valid[i] = 0
+
+    return np.where(valid == 1)[0]
+    
+
+
 class Brain:
 
     def __init__(self, stateCnt, actionCnt, train = False):
@@ -53,21 +68,6 @@ class Brain:
         else:
             self.model = torch.load('model.pt')
 
-
-
-    def find_all_valid_actions(states):
-        '''
-        Function that given the player's state give back the cards that
-        the player is allowed to play.
-        '''
-        valid = np.ones(40)
-
-        for i, state in enumerate(states[0][40:80]):
-            if state:
-                valid[i] = 0
-
-        return np.where(valid == 1)[0]
-    
 
     def optimize_model(self):
         if len(self.memory) < BATCH_SIZE:
