@@ -1,7 +1,5 @@
+from .Brain_DDQN import Brain
 import numpy as np
-from Brain_DDQN import Brain
-import random
-import math
 import torch
 
 steps_done = 0

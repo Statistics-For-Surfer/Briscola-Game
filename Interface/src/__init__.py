@@ -1,1 +1,1 @@
-from .interface import BriscolaApp, CardPosition
+from .app_interface import BriscolaApp, CardPosition

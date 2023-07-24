@@ -1,7 +1,8 @@
-from Objects import Deck
+from .Objects import Deck
 import numpy as np
 import random
 import math
+
 
 steps_done = 0
 EPS_START = .82
@@ -9,8 +10,7 @@ EPS_END = 0.01
 EPS_DECAY = 100
 
 
-
-class Game_Train():
+class GameTrain():
 
     def __init__(self):
 

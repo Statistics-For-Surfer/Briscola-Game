@@ -1,13 +1,15 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
 from collections import namedtuple, deque
-import random
-import numpy as np
-import Train as Briscola
+import torch.nn.functional as F
+import torch.optim as optim
+from .Train import GameTrain
 from tqdm import tqdm
+import torch.nn as nn
+import numpy as np
+import random
+import torch
 import wandb
+
+
 BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.001 
@@ -63,7 +65,7 @@ class Brain:
             self.optimizer = optim.AdamW(self.model.parameters(), lr=LR, 
                                     amsgrad=True)
             self.memory = ReplayMemory(10000)
-            self.env = Briscola.Game_Train()
+            self.env = GameTrain()
         else:
             self.model = torch.load('model.pt').cpu()
 
