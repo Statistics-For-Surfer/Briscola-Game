@@ -51,7 +51,6 @@ class BriscolaApp(object):
         self.first_card_pos = self.WIDTH/2 - (self.card_w *.5) - self.card_space_w
         self.card_smoothing = 10
         self.card_backside = self.load_card_img("Interface/images/card_backside.png")
-        self.small_logo = pygame.image.load("Interface/images/small_logo.png")
         self.table_color = '#207438'
         self.font = pygame.font.SysFont('candara', int(self.WIDTH * .029))
         self.button_font = pygame.font.SysFont('georgia', int(self.WIDTH * .031))
@@ -62,15 +61,60 @@ class BriscolaApp(object):
         self.active = False
         self.reactive = False
         self.level = 2
-        self.get_random_logo()
+        self.get_logo()
 
 
-    def get_random_logo(self):
-        '''Select random logo from all the images in the folder'''
+    def get_logo(self):
+        '''Select logo from all the images in the folder'''
         
-        random_logo = random.choice(os.listdir('Interface/images/logos'))
-        self.logo = pygame.image.load(f"Interface/images/logos/{random_logo}")
-        self.logo = pygame.transform.scale(self.logo, (self.WIDTH*0.2, self.HEIGHT*0.25))
+        if self.level == 1:
+            self.logo = pygame.image.load(f"Interface/images/logos/easy.png")
+            self.logo = pygame.transform.scale(self.logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+
+
+        elif self.level == 2:
+            self.logo = pygame.image.load(f"Interface/images/logos/intermediate.png")
+            self.logo = pygame.transform.scale(self.logo, (self.WIDTH*0.3, self.HEIGHT*0.25))
+
+
+        elif self.level == 3:
+            self.logo = pygame.image.load(f"Interface/images/logos/hard.png")
+            self.logo = pygame.transform.scale(self.logo, (self.WIDTH*0.25, self.HEIGHT*0.3))       
+
+
+    def change_small_logo(self, points):
+        if self.level == 3:
+            if self.player_turn and points >= 10:
+                self.small_logo = pygame.image.load("Interface/images/logos/hard_negative.png")
+            elif not self.player_turn and points >= 10:
+                self.small_logo = pygame.image.load("Interface/images/logos/hard_positive.png")
+            else: 
+                self.small_logo = pygame.image.load("Interface/images/logos/hard_neutral.png")
+
+        elif self.level == 2:
+            if self.player_turn and points >= 10:
+                self.small_logo = pygame.image.load("Interface/images/logos/intermediate_negative.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+            elif not self.player_turn and points >= 10:
+                self.small_logo = pygame.image.load("Interface/images/logos/intermediate_positive.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+            else: 
+                self.small_logo = pygame.image.load("Interface/images/logos/intermediate_neutral.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+
+        elif self.level == 1:
+            if self.player_turn and points >= 10:
+                self.small_logo = pygame.image.load("Interface/images/logos/easy_negative.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+            elif not self.player_turn and points >= 10:
+                self.small_logo = pygame.image.load("Interface/images/logos/easy_positive.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+            else: 
+                self.small_logo = pygame.image.load("Interface/images/logos/easy_neutral.png")
+                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+
+
+        self.screen.blit(self.small_logo, self.small_logo.get_rect(center = (self.WIDTH/7, self.HEIGHT/2)))
 
 
     def clean_values(self):
@@ -191,9 +235,6 @@ class BriscolaApp(object):
             img = self.load_card_img(path)
             self.rect_img_dict[str(pos)] = (img, card_id)
 
-        # Logo
-        self.screen.blit(self.small_logo, self.small_logo.get_rect(center = (self.WIDTH/7, self.HEIGHT/2)))
-
         # Change level
         pygame.draw.rect(self.screen, self.table_color, [self.WIDTH-self.w*0.55, self.h*0.35, self.w/2, self.h/2], 0, self.card_smoothing)
         self.change_level_button = pygame.draw.rect(self.screen, 'black', [self.WIDTH-self.w*0.55, self.h*0.35, self.w/2, self.h/2], 3, self.card_smoothing)
@@ -204,6 +245,8 @@ class BriscolaApp(object):
         self.update_cards_left()
         self.update_turn()
         self.update_score()
+        self.change_small_logo(0)
+
 
         # Reinforced case.
         if self.level == 3: 
@@ -553,6 +596,7 @@ class BriscolaApp(object):
         self.update_cards_left()
         self.update_turn()
         self.update_score()
+        self.change_small_logo(points)
 
 
     def update_cards_left(self):
@@ -678,21 +722,24 @@ class BriscolaApp(object):
                     if self.easy_level_button.collidepoint(self.event.pos):
                         self.level = 1
                         self.select_level()
+                        self.get_logo()
 
                     elif self.medium_level_button.collidepoint(self.event.pos):
                         self.level = 2
                         self.select_level()
+                        self.get_logo()
 
                     elif self.hard_level_button.collidepoint(self.event.pos):
                         self.level = 3
                         self.select_level()
+                        self.get_logo()
 
                 # Change level button.
                 if self.active:
                     if self.event.type == pygame.MOUSEBUTTONDOWN:
                         if self.change_level_button.collidepoint(self.event.pos):
                             self.active, self.reactive = False, False
-                            self.get_random_logo()
+                            self.get_logo()
                             continue
 
                     # Check if the game match is over and possibly start another one.
