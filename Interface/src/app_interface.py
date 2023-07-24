@@ -2,36 +2,8 @@ import torch
 import random
 import pygame
 import numpy as np
-from train.Brain_DDQN import DQN
-
-
-
-class CardPosition(object):
-    def __init__(self, pos_function, game):
-        self.name = pos_function
-        self.x, self.y = self.get_position(game)
-
-    def get_position(self, game):
-        if self.name == 'deck':
-            return game.WIDTH - game.card_space_w, (game.HEIGHT - game.card_h)/2
-        elif self.name == 'trump':
-            return game.WIDTH - game.card_h/2 - game.card_space_w, game.HEIGHT/2 - game.card_h/4
-        elif self.name == 'player_card_1':
-            return game.first_card_pos + (game.card_space_w * 0), game.HEIGHT - game.card_h - game.card_space_h
-        elif self.name == 'player_card_2':
-            return game.first_card_pos + (game.card_space_w * 1), game.HEIGHT - game.card_h - game.card_space_h
-        elif self.name == 'player_card_3':
-            return game.first_card_pos + (game.card_space_w * 2), game.HEIGHT - game.card_h - game.card_space_h
-        elif self.name == 'bot_card_1':
-            return game.first_card_pos + (game.card_space_w * 0), game.card_space_h
-        elif self.name == 'bot_card_2':
-            return game.first_card_pos + (game.card_space_w * 1), game.card_space_h
-        elif self.name == 'bot_card_3':
-            return game.first_card_pos + (game.card_space_w * 2), game.card_space_h
-        elif self.name == 'bot_played_card':
-            return game.WIDTH/2 - game.card_w/2 + game.card_space_w/2, game.HEIGHT/2 - game.card_h/2
-        elif self.name == 'player_played_card':
-            return game.WIDTH/2 - game.card_w/2 - game.card_space_w/2, game.HEIGHT/2 - game.card_h/2
+from interface.src.dqn_model import DQN
+from interface.src.card_position import CardPosition
 
 
 
@@ -84,48 +56,49 @@ class BriscolaApp(object):
 
 
     def change_small_logo(self, points):
+
+        small_logos_path = 'Interface/images/logos/'
         if self.level == 3:
             if self.player_turn and points >= 10:
-                self.small_logo = pygame.image.load("Interface/images/logos/hard_negative.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}hard_negative.png")
             elif not self.player_turn and points >= 10:
-                self.small_logo = pygame.image.load("Interface/images/logos/hard_positive.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}hard_positive.png")
             else: 
-                self.small_logo = pygame.image.load("Interface/images/logos/hard_neutral.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
-
+                self.load_small_logo_img(f"{small_logos_path}hard_neutral.png")
 
         elif self.level == 2:
             if self.player_turn and points >= 10:
-                self.small_logo = pygame.image.load("Interface/images/logos/intermediate_negative.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}intermediate_negative.png")
             elif not self.player_turn and points >= 10:
-                self.small_logo = pygame.image.load("Interface/images/logos/intermediate_positive.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}intermediate_positive.png")
             else: 
-                self.small_logo = pygame.image.load("Interface/images/logos/intermediate_neutral.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}intermediate_neutral.png")
 
         elif self.level == 1:
             if self.player_turn and points >= 10:
-                self.small_logo = pygame.image.load("Interface/images/logos/easy_negative.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}easy_negative.png")
             elif not self.player_turn and points >= 10:
-                self.small_logo = pygame.image.load("Interface/images/logos/easy_positive.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}easy_positive.png")
             else: 
-                self.small_logo = pygame.image.load("Interface/images/logos/easy_neutral.png")
-                self.small_logo = pygame.transform.scale(self.small_logo, (self.WIDTH*0.23, self.HEIGHT*0.28))
+                self.load_small_logo_img(f"{small_logos_path}easy_neutral.png")
 
 
         self.screen.blit(self.small_logo, self.small_logo.get_rect(center = (self.WIDTH/7, self.HEIGHT/2)))
 
 
+    def load_small_logo_img(self, path):
+        '''Load small image logo given the path'''
+
+        img = pygame.image.load(path)
+        img = img.convert_alpha()
+        img = pygame.transform.smoothscale(img, (self.WIDTH*0.23, self.HEIGHT*0.28))
+        self.small_logo = pygame.transform.scale(img, (self.WIDTH*0.23, self.HEIGHT*0.28))
+
+
     def clean_values(self):
         '''Clean saved values from previous game'''
 
-        self.len_virtual_deck = 33 # Start with 33
+        self.len_virtual_deck = 1 # Start with 33
         self.player_turn = bool(random.randint(0, 1))
         self.last_two_hand = False
         self.bot_points, self.player_points, self.points = 0, 0, 0
@@ -233,8 +206,7 @@ class BriscolaApp(object):
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
             self.screen.blit(img, pos)
-            # [Show bots cards]
-            # self.rect_img_dict[str(pos)] = (img, card_id)
+            self.rect_img_dict[str(pos)] = (img, card_id)
 
         # Bot cards
         for pos in self.bot_hand:
@@ -242,7 +214,8 @@ class BriscolaApp(object):
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
             self.rect_img_dict[str(pos)] = (img, card_id)
-            self.screen.blit(img, pos)
+            # [Show bot's cards]
+            # self.screen.blit(img, pos)
 
 
         # Change level
@@ -566,7 +539,7 @@ class BriscolaApp(object):
             path, card_id = self.virtual_deck.pop(0)
             img = self.load_card_img(path)
             self.rect_img_dict[str(self.bot_free_position)] = (img, card_id)
-            # [Show bot cards]
+            # [Show bot's cards]
             # self.screen.blit(img, self.bot_free_position)
 
             # Remove the two cards from the deck.

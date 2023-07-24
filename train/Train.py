@@ -1,4 +1,4 @@
-from train.Objects import Deck
+from Objects import Deck
 import numpy as np
 import random
 import math

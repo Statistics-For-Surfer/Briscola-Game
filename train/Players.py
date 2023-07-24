@@ -1,4 +1,4 @@
-from train.Brain_DDQN import Brain
+from Brain_DDQN import Brain
 import numpy as np
 import torch
 

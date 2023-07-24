@@ -1,7 +1,7 @@
 from collections import namedtuple, deque
 import torch.nn.functional as F
 import torch.optim as optim
-from train.Train import GameTrain
+from Train import GameTrain
 from tqdm import tqdm
 import torch.nn as nn
 import numpy as np
@@ -18,22 +18,21 @@ TAU = 0.005
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ### Check plots on 'https://wandb.ai/site'
-
-# wandb.login()
-# # start a new wandb run to track this script
-# wandb.init(
-#     #set the wandb project where this run will be logged
-#     project="briscola_game",
-#     # track hyperparameters and run metadata
-#     config={
-#     "Value Function": 0,
-#     "learning_rate": 0.01 ,
-#     "reward": 0, 
-#     "architecture": "QNN",
-#     "dataset": "NO",
-#     "epochs": 100,
-#     }
-# )
+wandb.login()
+# start a new wandb run to track this script
+wandb.init(
+    #set the wandb project where this run will be logged
+    project="briscola_game",
+    # track hyperparameters and run metadata
+    config={
+    "Value Function": 0,
+    "learning_rate": 0.01 ,
+    "reward": 0, 
+    "architecture": "QNN",
+    "dataset": "NO",
+    "epochs": 100,
+    }
+)
 
 
 class Brain:
@@ -52,7 +51,7 @@ class Brain:
             self.memory = ReplayMemory(10000)
             self.env = GameTrain()
         else:
-            self.model = torch.load('train/model.pt')
+            self.model = torch.load('model.pt')
 
 
 
@@ -264,4 +263,4 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
         
-        return F.softmax(self.layer4(x))
+        return F.softmax(self.layer4(x), dim=0)
