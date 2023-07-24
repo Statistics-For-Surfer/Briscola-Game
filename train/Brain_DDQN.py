@@ -1,7 +1,7 @@
 from collections import namedtuple, deque
 import torch.nn.functional as F
 import torch.optim as optim
-from .Train import GameTrain
+from train.Train import GameTrain
 from tqdm import tqdm
 import torch.nn as nn
 import numpy as np
@@ -16,39 +16,24 @@ LAMBDA = 0.001
 LR = 0.001 
 TAU = 0.005
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-wandb.login()
-# start a new wandb run to track this script
-wandb.init(
-    #set the wandb project where this run will be logged
-    project="briscola_game",
-    # track hyperparameters and run metadata
-    config={
-    "Value Function": 0,
-    "learning_rate": 0.01 ,
-    "reward": 0, 
-    "architecture": "QNN",
-    "dataset": "NO",
-    "epochs": 100,
-    }
-)
 
-# TODO capire come fare il training e salvare il modello 
-# 
-# Utile?
-# https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+### Check plots on 'https://wandb.ai/site'
 
-def find_all_valid_actions(states):
-        '''
-        Function that given the player's state give back the cards that
-        the player is allowed to play.
-        '''
-        valid = np.ones(40)
-
-        for i, state in enumerate(states[0][40:80]):
-            if state:
-                valid[i] = 0
-
-        return np.where(valid == 1)[0]
+# wandb.login()
+# # start a new wandb run to track this script
+# wandb.init(
+#     #set the wandb project where this run will be logged
+#     project="briscola_game",
+#     # track hyperparameters and run metadata
+#     config={
+#     "Value Function": 0,
+#     "learning_rate": 0.01 ,
+#     "reward": 0, 
+#     "architecture": "QNN",
+#     "dataset": "NO",
+#     "epochs": 100,
+#     }
+# )
 
 
 class Brain:
@@ -67,10 +52,23 @@ class Brain:
             self.memory = ReplayMemory(10000)
             self.env = GameTrain()
         else:
-            self.model = torch.load('model.pt').cpu()
+            self.model = torch.load('train/model.pt')
 
 
-        # TODO come fare quando abbiamo già il modello?
+
+    def find_all_valid_actions(states):
+        '''
+        Function that given the player's state give back the cards that
+        the player is allowed to play.
+        '''
+        valid = np.ones(40)
+
+        for i, state in enumerate(states[0][40:80]):
+            if state:
+                valid[i] = 0
+
+        return np.where(valid == 1)[0]
+    
 
     def optimize_model(self):
         if len(self.memory) < BATCH_SIZE:
@@ -144,7 +142,7 @@ class Brain:
         '''
 
         # Select the actions that are valid given the state
-        valid_actions = find_all_valid_actions(state)
+        valid_actions = self.find_all_valid_actions(state)
         
         # Get the predictions of the nn
         next_Qs = self.predict(state, target).flatten()
@@ -265,8 +263,5 @@ class DQN(nn.Module):
         x = F.relu(self.layer1(x)) 
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
-        #print(F.softmax(self.layer4(x)))
+        
         return F.softmax(self.layer4(x))
-    
-
-
