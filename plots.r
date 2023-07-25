@@ -43,13 +43,12 @@ Win <- c(0.773, 0.937, 0.783, 0.799, 0.658, 0.604, 0.632, 0.494, 0.555, 0.414, 0
 data <- data.frame(Decks, Opponent, Win)
 data$Decks <- factor(data$Decks, levels = c("10", "20", "50", "100", "200", "all"))
 data$Opponent <- factor(data$Opponent, levels = c("Random", "Greedy"))
-custom_colors <- c("Random" = "#355950", "Greedy" = "#CDBD7E")
+custom_colors <- c("Random" = "#118ab2", "Greedy" = "#ffd166")
 
 
 ggplot(data, aes(fill=Opponent, y=Win, x=Decks)) + 
   geom_bar(position="dodge", stat="identity") + 
   ylim(c(0,1)) +
   scale_fill_manual(values = custom_colors) + 
-  ylab('Win Ratio') + 
-  theme_minimal() + theme(panel.grid=element_blank(), panel.border=element_blank())
+  ylab('Win Ratio')
 
