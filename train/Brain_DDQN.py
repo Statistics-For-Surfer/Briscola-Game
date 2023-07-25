@@ -141,7 +141,7 @@ class Brain:
         '''
 
         # Select the actions that are valid given the state
-        valid_actions = self.find_all_valid_actions(state)
+        valid_actions = find_all_valid_actions(state)
         
         # Get the predictions of the nn
         next_Qs = self.predict(state, target).flatten()
@@ -263,4 +263,4 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
         
-        return F.softmax(self.layer4(x), dim=0)
+        return F.softmax(self.layer4(x))
