@@ -10,3 +10,4 @@ __pycache__/
 Boh/wandb/debug-internal.log
 Boh/wandb/debug.log
 *.log
+train/wandb/latest-run
