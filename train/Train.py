@@ -2,12 +2,13 @@ from Objects import Deck
 import numpy as np
 import random
 import math
+import config
 
 
 steps_done = 0
 EPS_START = .82
 EPS_END = 0.01
-EPS_DECAY = 100
+EPS_DECAY = 50000
 
 
 class GameTrain():
@@ -255,6 +256,7 @@ class GameTrain():
         # Find the new threshold that changes with the number of steps
         eps_threshold = EPS_END + (EPS_START - EPS_END) * \
                         math.exp(-1. * steps_done / EPS_DECAY)
+        config.eps = eps_threshold
         steps_done += 1
 
 

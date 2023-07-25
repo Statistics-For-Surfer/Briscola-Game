@@ -1,6 +1,7 @@
 from collections import namedtuple, deque
 import torch.nn.functional as F
 import torch.optim as optim
+import config
 from Train import GameTrain
 from tqdm import tqdm
 import torch.nn as nn
@@ -25,6 +26,8 @@ wandb.init(
     project="briscola_game",
     # track hyperparameters and run metadata
     config={
+    "win_ration": 0,
+    "eps": .82,
     "Value Function": 0,
     "learning_rate": 0.01 ,
     "reward": 0, 
@@ -119,7 +122,7 @@ class Brain:
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.model.parameters(), 100)
         self.optimizer.step()
-        wandb.log({"loss": loss , "reward": reward_batch})
+        wandb.log({"loss": loss , "reward": reward_batch , "eps" : config.eps})
         return loss
 
 
@@ -164,9 +167,11 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 20000
+            num_episodes = 2000
 
         wins = []
+        w = 0
+        p = 0
         loss = []
         print(num_episodes)
         for i_episode in tqdm(range(num_episodes)):
@@ -219,6 +224,11 @@ class Brain:
 
                 if done:
                     break
+            if np.sign(reward[0].cpu()):
+                w += 1
+            p += 1
+            wandb.log({"wins_ratio": w / p})
+
                 
             wins.append(np.sign(reward[0].cpu()) if reward[0] else 0)
         torch.save(self.model, 'model.pt')
