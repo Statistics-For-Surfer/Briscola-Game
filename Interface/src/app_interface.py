@@ -501,9 +501,14 @@ class BriscolaApp(object):
             if player_card[2] > bot_card[2]:
                 self.player_turn, self.points = True, points
                 self.player_points += self.points
-            else:
+            elif player_card[2] < bot_card[2]:
                 self.player_turn, self.points = False, points
                 self.bot_points += self.points
+            else:
+                if player_card[1] > bot_card[1]:
+                    self.player_turn = True
+                else:
+                    self.player_turn = False
         else:
             if bot_card[0] == trump and player_card[0] != trump:
                 self.player_turn, self.points = False, points
@@ -518,6 +523,7 @@ class BriscolaApp(object):
                 else:
                     self.points = points
                     self.bot_points += self.points
+                    self.player_turn = False
 
         if self.level == 3:
             # Add points to the state.
