@@ -167,7 +167,7 @@ class Brain:
         if device == 'cuda0' :
             num_episodes = 1000
         else:
-            num_episodes = 2000
+            num_episodes = 20000
 
         wins = []
         w = 0
