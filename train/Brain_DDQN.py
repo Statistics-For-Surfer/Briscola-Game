@@ -18,7 +18,7 @@ LR = 0.001
 TAU = 0.005
 
 # Select the gpu as device if possible
-device = torch.device('cuda0' if torch.cuda.is_available() else 'cpu')
+device = 'cpu'
 
 # Connect to the wandb.ai site to keep track of the results
 ### Check plots on 'https://wandb.ai/site'
