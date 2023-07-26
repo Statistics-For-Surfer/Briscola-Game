@@ -10,14 +10,17 @@ import random
 import torch
 import wandb
 
-
+# Define all the hyperparemeters for the network
 BATCH_SIZE = 20
 GAMMA = 0.99
 LAMBDA = 0.001 
 LR = 0.001 
 TAU = 0.005
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# Select the gpu as device if possible
+device = torch.device('cuda0' if torch.cuda.is_available() else 'cpu')
+
+# Connect to the wandb.ai site to keep track of the results
 ### Check plots on 'https://wandb.ai/site'
 wandb.login()
 # start a new wandb run to track this script
@@ -43,6 +46,8 @@ def find_all_valid_actions(states):
     Function that given the player's state give back the cards that
     the player is allowed to play.
     '''
+
+    # To identify the valid card create a list with 0 if allowed else 1
     valid = np.ones(40)
 
     for i, state in enumerate(states[0][40:80]):
@@ -54,25 +59,44 @@ def find_all_valid_actions(states):
 
 
 class Brain:
+    '''
+    Class used to train the reinforced agent and later select the card to play
+    using the trained network
+    '''
 
     def __init__(self, stateCnt, actionCnt, train = False):
         self.stateCnt = stateCnt
         self.actionCnt = actionCnt
 
+        # Agent has to be trained
         if train:
+            # Define every object needed for the agent
+
+            # networks
             self.model = DQN(self.stateCnt, self.actionCnt).to(device)
             self.model_ = DQN(self.stateCnt, self.actionCnt).to(device)
-
             self.model_.load_state_dict(self.model.state_dict())
+
             self.optimizer = optim.AdamW(self.model.parameters(), lr=LR, 
                                     amsgrad=True)
+            # Optimizer
+            # Obeject to store and keep track of the actions
             self.memory = ReplayMemory(10000)
+            # Environment
             self.env = GameTrain()
+
+        # Agent was already trained
         else:
+            # Load the trained network
             self.model = torch.load('model.pt')
 
 
     def optimize_model(self):
+        '''
+        Function used to update the parameters of the model during the training
+        phase. 
+        Reference: https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+        '''
         if len(self.memory) < BATCH_SIZE:
             return
         
@@ -122,6 +146,7 @@ class Brain:
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.model.parameters(), 100)
         self.optimizer.step()
+
         wandb.log({"loss": loss , "reward": reward_batch , "eps" : config.eps})
         return loss
 
@@ -140,17 +165,17 @@ class Brain:
     def predict_next_action(self, state, target=False): 
         '''
         Function that given the current state of the player gives back
-        the next action using the predicted Q table
+        the next action using the predicted Q table.
         '''
 
         # Select the actions that are valid given the state
-        valid_actions = find_all_valid_actions(state)
+        non_valid_actions = find_all_valid_actions(state)
         
         # Get the predictions of the nn
         next_Qs = self.predict(state, target).flatten()
-        #print(next_Qs)
-        # Select the one that are actually valid
-        next_Qs[valid_actions] = -1e8
+
+        # Mask the values for the cards that can't be played 
+        next_Qs[non_valid_actions] = -1e8
 
         # The best valid action
         idx = torch.argmax(next_Qs)
@@ -163,43 +188,52 @@ class Brain:
 
     
     def train(self):
+        '''
+        Function that using the training environment simulate a high number of 
+        games to train the agent.
+        '''
 
-        if device == 'cuda0' :
-            num_episodes = 1000
-        else:
-            num_episodes = 20000
+        # Select the number of games to simulate
+        num_episodes = 20000
 
+        # Store during the simulation: number of lost and won games and the loss.
         wins = []
         w = 0
         p = 0
         loss = []
         print(num_episodes)
         for i_episode in tqdm(range(num_episodes)):
-            # Initialize the environment and get it's state
+            # Initialize the environment
             self.env.reset()
+            # Select who will be the fist to play
             self.env.first_to_play = random.randint(1,2) + 1
 
+            # If the training agent is not the first to play, let the other make its play
             if self.env.first_to_play == 2:
                 self.env.first_hand()
 
+            # Get the state for the training agent
             state = self.env.get_state_for_player(1)
             state = torch.tensor(state, dtype=torch.float64, 
                                 device=device).unsqueeze(0)
+            
+            # For each hand
             for _ in range(20):
                 # Let the agent choose the action
                 action = self.env.get_action_train(state, self.env.player_1, self)
-                    #tensor_actions = torch.zeros(40, dtype=torch.int64)
-                    #tensor_actions[action.id] = 1
                 tensor_actions = torch.full((1,1), action.id, device = device,
                                             dtype=torch.int64)
                 
-                # Perform the action and see where it will lead to
+                # Perform the action and find the reward obtained and the next state
                 observation, reward, done = self.env.step(action)
                 reward = torch.tensor([reward], device=device, dtype=torch.int64)
-                #print(observation)
+                
+                # If the game is finished
                 if done:
+                    # There is no next state
                     next_state = None
                 else:
+                    # Store the new state
                     next_state = torch.tensor(observation, dtype=torch.float64, 
                                             device=device).unsqueeze(0)
 
@@ -212,8 +246,6 @@ class Brain:
                 # Perform one step of the optimization (on the policy network)
                 loss.append(self.optimize_model())
 
-                #print(self.model.state_dict())
-
                 # Soft update of the target network's weights
                 # θ′ ← τ θ + (1 −τ )θ′
                 target_net_state_dict = self.model_.state_dict()
@@ -224,13 +256,18 @@ class Brain:
 
                 if done:
                     break
+
             if np.sign(reward[0].cpu()):
                 w += 1
             p += 1
+            
+            # Store the win-ratio as the number of won games over the played ones.
             wandb.log({"wins_ratio": w / p})
 
                 
             wins.append(np.sign(reward[0].cpu()) if reward[0] else 0)
+
+        # Save the model
         torch.save(self.model, 'model.pt')
         return wins, loss
     
@@ -242,12 +279,16 @@ Transition = namedtuple('Transition',
 
 
 class ReplayMemory(object):
+    '''
+    Class used to store all the touples ('state', 'action', 'next_state', 'reward')
+    and retrieve them for the optimization step
+    '''
 
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
     def push(self, *args):
-        """Save a transition"""
+        '''Save a transition'''
         self.memory.append(Transition(*args))
 
     def sample(self, batch_size):
@@ -258,6 +299,18 @@ class ReplayMemory(object):
     
 
 class DQN(nn.Module):
+    '''
+    Class to define the network structure: 4 layers
+
+    - 1x Input Layer, a linear layer 164x256
+    - 2x Hiddent Layers, 256x256
+    - 1x Output Layer, 256x40
+
+    Activation functions:
+
+    - ReLU, applied after the input and hidden layers
+    - Softmax, applied at the end after the output layer.
+    '''
 
     def __init__(self, n_observations, n_actions, hidden = 256):
         super(DQN, self).__init__()
@@ -266,9 +319,11 @@ class DQN(nn.Module):
         self.layer3 = nn.Linear(hidden, hidden, dtype=torch.float64)
         self.layer4 = nn.Linear(hidden, n_actions, dtype=torch.float64)
 
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
+        '''
+        Called with either one element to determine next action, or a batch
+        during optimization.
+        '''
         x = F.relu(self.layer1(x)) 
         x = F.relu(self.layer2(x))
         x = F.relu(self.layer3(x))
