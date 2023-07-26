@@ -302,9 +302,9 @@ class DQN(nn.Module):
     '''
     Class to define the network structure: 4 layers
 
-    - 1x Input Layer, a linear layer 164x256
-    - 2x Hiddent Layers, 256x256
-    - 1x Output Layer, 256x40
+    - 1x Input Layer 162
+    - 3x Hiddent Layers 256
+    - 1x Output Layer 40
 
     Activation functions:
 
