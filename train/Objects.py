@@ -12,7 +12,7 @@ class Card:
     - The number of the card, from 1 to 10.
     - The seed of the card, 'Bastoni', 'Coppe', 'Denari' or 'Spade'.
     - The values of the card.
-    - Whether the card is a bricola.
+    - Whether the card is a bricola or not.
     '''
 
     def __init__(self, args):
@@ -53,12 +53,18 @@ class Deck:
     composed of 40 cards.
     '''
 
-    def __init__(self):# rand = True):
+    def __init__(self, num_decks = 10):
+        # Define all the card objects
         self.deck = self.create_deck()
-        random.seed(random.randint(1, 10))
+        if num_decks:
+            # The seed is used to define the number of possible deck to use during the game
+            random.seed(random.randint(1, num_decks))
         random.shuffle(self.deck)
         random.seed()
+
+        # Select the Briscola
         self.briscola = self.get_briscola()
+        # Mark the cards with the briscola seed
         self.all_cards = self.set_briscola()
 
     def create_deck(self):
@@ -85,7 +91,7 @@ class Deck:
     
     def get_briscola(self):
         '''
-        Find the card that should be the briscola for the game and 
+        Find the card that should be the Briscola for the game and 
         put it at the end of the deck
         '''
 
@@ -101,6 +107,7 @@ class Deck:
         The function will also give back all the cards in the deck 
         with their completed attributes
         '''
+        
         all_cards = []
         for card in self.deck:
             if card.seed == self.briscola.seed:

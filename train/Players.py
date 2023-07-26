@@ -18,6 +18,7 @@ class Player:
         self.state = None
 
         if policy == 'Q_learning':
+            # It the policy is 'Q_learning' we have to use the trained network
             self.brain = Brain(162, 40)
 
 
@@ -75,11 +76,13 @@ class Player:
         take the hand if it can else just throw the one with the lowest 
         value.
         '''
+
+        # List that will contain all the cards suitable for the greedy method
         possible_action = []
 
 
         if card_on_table == None:
-            # I want to put the card with less points
+            # No informations about the other player so play the card less valuable
             c = self.max_min_values(self.cards, maxx = False)
             self.cards.remove(c)
             return c
@@ -95,21 +98,22 @@ class Player:
                         possible_action.append(card)
             else:
                 for card in self.cards:
+                    # Check if you have cards that can win the hand
                     if ((card.seed == card_on_table.seed and 
                         card.value > card_on_table.value) or 
                         card.is_Briscola):
 
                         possible_action.append(card)
 
-        # I cannot take
+        # There aren't card that can win the hand
         if len(possible_action) == 0:
-            # I want to put the card with less points
+            # Select the card with less points
             c = self.max_min_values(self.cards, maxx = False)
             self.cards.remove(c)
             return c
 
         else:
-            # I want to put the card with more points
+            # Select the card with more points out of the ones that can win the hand
             c = self.max_min_values(possible_action, maxx = True)
             self.cards.remove(c)
             return c
@@ -133,9 +137,7 @@ class Player:
 
     def Q_action(self, state):
         '''
-        Choose the card:
-        1. Randomly (exploration) if the random number is less than eps.
-        2. Using the nn predicton (exploitation) otherwise.
+        Choose the card Using the nn predicton.
         '''
 
         card_id = self.brain.predict_next_action(torch.tensor([state], device='cpu',  
