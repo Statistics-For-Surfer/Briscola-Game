@@ -41,7 +41,7 @@ decks_inf
 
 
 # Simulations against Human Agents
-report <- read_csv("data.csv")
+report <- read_csv("human_agent_data.csv")
 livs <- report$`How would you rate your Briscola skills?`
 results <- report$`Which was your final score?`
 mean(results[livs <= 3])
@@ -56,6 +56,7 @@ Win <- c(0.773, 0.937, 0.783, 0.799, 0.658, 0.604, 0.632, 0.494, 0.555, 0.414, 0
 data <- data.frame(Decks, Opponent, Win)
 data$Decks <- factor(data$Decks, levels = c("10", "20", "50", "100", "200", "all"))
 data$Opponent <- factor(data$Opponent, levels = c("Random", "Greedy"))
+custom_colors <- c("Random" = "#118ab2", "Greedy" = "#ffd166")
 custom_colors <- c("Random" = "#355950", "Greedy" = "#CDBD7E")
 
 
@@ -64,38 +65,33 @@ ggplot(data, aes(fill=Opponent, y=Win, x=Decks)) +
   ylim(c(0,1)) +
   scale_fill_manual(values = custom_colors) + 
   ylab('Win Ratio') + 
-  theme_minimal() + theme(panel.grid=element_blank(), panel.border=element_blank())
+  theme_minimal() +
+  theme(panel.grid=element_blank(), panel.border=element_blank())
 
 
 # Plot Human Agent
-report <- read_csv("human_agent_data.csv")
-livs <- report$`How would you rate your Briscola skills?`
-results <- report$`Which was your final score?`
-mean(results[livs <= 3])
-mean(results[livs > 3])
-
 a <- mean(results[livs <= 3])
 b <- mean(results[livs > 3])
 
 livs[livs <= 3] <- 0
 livs[livs > 3] <- 1
-livs <- c("Discrete level", "High level")
+livs <- c("Discrete", "High")
 m <- c(a,b)
 data <- data.frame(livs, m)
 
-data$livs <- factor(data$livs, levels = c("Discrete level", "High level"))
-custom_colors <- c("Discrete level" = "#118ab2", "High level" = "#ffd166")
+data$livs <- factor(data$livs, levels = c("Discrete", "High"))
+custom_colors <- c("Discrete" = "#118ab2", "High" = "#ffd166")
+custom_colors <- c("Discrete" = "#355950", "High" = "#CDBD7E")
 
 
 
 ggplot(data, aes(y=m, x=livs , fill = livs)) + 
   geom_bar(position="dodge", stat="identity") + 
   ylim(c(0,115)) +
-  xlab("") +
+  xlab("Level") +
   scale_fill_manual(values = custom_colors) + 
   ylab("Average points") +
-  guides(fill = guide_legend(title="Oppoents Level")) +
-  theme_light()
-
-
+  guides(fill = guide_legend(title="Opponents Level")) +
+  theme_minimal() +
+  theme(panel.grid=element_blank(), panel.border=element_blank())
 
