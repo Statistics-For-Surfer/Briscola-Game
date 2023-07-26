@@ -300,16 +300,16 @@ class ReplayMemory(object):
 
 class DQN(nn.Module):
     '''
-    Class to define the network structure: 4 layers
+    Class to define the network structure.
 
-    - 1x Input Layer 162
-    - 3x Hiddent Layers 256
-    - 1x Output Layer 40
+    Dimensions:
+    - 1x Input 162
+    - 3x Hidden 256
+    - 1x Output 40
 
     Activation functions:
-
-    - ReLU, applied after the input and hidden layers
-    - Softmax, applied at the end after the output layer.
+    - ReLU, applied after the linear layers.
+    - Softmax, applied to the output.
     '''
 
     def __init__(self, n_observations, n_actions, hidden = 256):
