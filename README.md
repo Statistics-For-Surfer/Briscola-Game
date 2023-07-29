@@ -20,11 +20,20 @@ This repository contains:
 *  `Presentation.pdf`: The slides presentation of our project
 *  `report.pdf`: The report of our project
 *  `interface`: Folder that contains usefull files for the app
-*  `hw1_markdown.html`: The html file with comments and results reported
-*  `train.csv`: The train set we used for the project
-*  `test.csv`: The test set without $y$
-*  `preds`: folder contains the predictions of various model
-*  `RData`: folder contains the best parameter selected
+*  `results`: Folder that contains files for results presentation
+*  `train`: Folder that contains the python files used for train the agent
+*  `App.py`: Python file usefull for running in local the application
+*  `statlearn_1st.pdf`: The first impression of our projec before starting.
+
+
+  We are very proud of our project. If you use our file we are glad if you mentione us.
+
+  Linkedin Profiles 
+  `Maria Vittoria Vestini:` https://www.linkedin.com/in/maria-vittoria-vestini-a3708b235/
+  `Matteo Candi:` https://www.linkedin.com/in/matteo-candi-59411b215/
+  `Paolo Barba:` https://www.linkedin.com/in/paolo-barba-a45054233/
+  `Silvia Costantini:` https://www.linkedin.com/in/silvia-costantini-56ab22256/
+  
 
 
 
