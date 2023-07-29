@@ -17,9 +17,9 @@ The goal of the project is to teach an agent through a Reinforcement learninc ap
 
 ### *Structure*:
 This repository contains:
-*  `HW_part1.pdf`: The homework explanatiom
-*  `HW_part2.pdf`: The homework explanation
-*  `hw1_markdown.Rmd`: The Rmd file with comments and results
+*  `Presentation.pdf`: The slides presentation of our project
+*  `report.pdf`: The report of our project
+*  `interface`: Folder that contains usefull files for the app
 *  `hw1_markdown.html`: The html file with comments and results reported
 *  `train.csv`: The train set we used for the project
 *  `test.csv`: The test set without $y$
