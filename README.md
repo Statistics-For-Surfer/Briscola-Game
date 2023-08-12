@@ -13,7 +13,7 @@ The goal of the project is to teach an agent through a Reinforcement learning ap
 * Paolo Barba
 * Matteo Candi
 * Costantini Silvia
-* Vestini Maria Vitoria
+* Vestini Maria Vittoria
 
 ### *Structure*:
 This repository contains:
@@ -23,7 +23,7 @@ This repository contains:
 *  `results`: Folder that contains files for results presentation
 *  `train`: Folder that contains the python files used for train the agent
 *  `App.py`: Python file usefull for running in local the application
-*  `statlearn_1st.pdf`: The first impression of our projec before starting.
+*  `statlearn_1st.pdf`: The first impression of our project before starting.
 
 
   We are very proud of our project. If you use our files we are glad if you mentione us.
