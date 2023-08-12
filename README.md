@@ -30,8 +30,11 @@ This repository contains:
 
   Linkedin Profiles 
   `Maria Vittoria Vestini:` https://www.linkedin.com/in/maria-vittoria-vestini-a3708b235/
+  
   `Matteo Candi:` https://www.linkedin.com/in/matteo-candi-59411b215/
+  
   `Paolo Barba:` https://www.linkedin.com/in/paolo-barba-a45054233/
+  
   `Silvia Costantini:` https://www.linkedin.com/in/silvia-costantini-56ab22256/
   
 
