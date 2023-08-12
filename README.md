@@ -28,7 +28,8 @@ This repository contains:
 
   We are very proud of our project. If you use our file we are glad if you mentione us.
 
-  Linkedin Profiles 
+  Linkedin Profiles :
+  
   `Maria Vittoria Vestini:` https://www.linkedin.com/in/maria-vittoria-vestini-a3708b235/
   
   `Matteo Candi:` https://www.linkedin.com/in/matteo-candi-59411b215/
