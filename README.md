@@ -7,7 +7,7 @@
 ## Content description
 This repository contains the final  project of Statistical Learning during the accademic year 2022/2023 [master degree in Data Science](http://datascience.i3s.uniroma1.it/it) in Sapienza University of Rome. 
 
-The goal of the project is to teach an agent through a Reinforcement learninc approach how to play the popular italian cards game Briscola. The agent must beat the baselines agents : Random & Greedy.
+The goal of the project is to teach an agent through a Reinforcement learning approach how to play the popular italian cards game Briscola. The agent must beat the baselines agents : Random & Greedy.
 
 ### *Authors*:
 * Paolo Barba
@@ -26,7 +26,7 @@ This repository contains:
 *  `statlearn_1st.pdf`: The first impression of our projec before starting.
 
 
-  We are very proud of our project. If you use our file we are glad if you mentione us.
+  We are very proud of our project. If you use our files we are glad if you mentione us.
 
   Linkedin Profiles :
   
